@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { 
+  collection, 
+  getDocs, 
+  query, 
+  orderBy, 
+  limit,
+  where,
+  Timestamp,
+  getCountFromServer
+} from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter,CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +41,17 @@ export default function AdminDashboard() {
     inactivePolls: 0,
   })
   const [votesOverTime, setVotesOverTime] = useState([])
+  
+  const [dashboardData, setDashboardData] = useState({
+    recentPolls: [],
+    pollsData: {
+      totalPolls: 0,
+      activePolls: 0,
+      inactivePolls: 0,
+    },
+    votesOverTime: [],
+    loading: true
+  });
 
   useEffect(() => {
     const fetchDashboardData = async () => {

@@ -3,13 +3,13 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, OAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 const firebaseConfig = {
-  apiKey: "AIzaSyAyApjv2q6EV2tsYQ3bfaju0pSJCZKC5so",
-  authDomain: "voting-29899.firebaseapp.com",
-  projectId: "voting-29899",
-  storageBucket: "voting-29899.appspot.com",
-  messagingSenderId: "399432590493",
-  appId: "1:399432590493:web:3d87e8ce0b9ae4f7762074",
-  measurementId: "G-68NGDRC5VP"
+  apiKey: "AIzaSyBQVA2fXqH5k2MksrrlztWdGaS4z1Qf23w",
+  authDomain: "voting-65029.firebaseapp.com",
+  projectId: "voting-65029",
+  storageBucket: "voting-65029.appspot.com",
+  messagingSenderId: "359644767360",
+  appId: "1:359644767360:web:988892338bfcbebd693265",
+  measurementId: "G-R4MTLCTPS7"
 };
 
 // Initialize Firebase

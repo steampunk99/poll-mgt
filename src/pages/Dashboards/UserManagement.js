@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2, Plus, UserPlus, Pencil, Trash2, Search } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Navigate } from 'react-router-dom'
 import {
   Table,
   TableBody,
@@ -82,6 +83,7 @@ export default function UserManagement() {
     try {
       await addUser(newUser.email, newUser.password, newUser.role)
       setNewUser({ email: '', password: '', role: 'voter' })
+      Navigate('/dashboard/manage-users')
     } catch (error) {
       console.error("Error adding user:", error)
     } finally {
