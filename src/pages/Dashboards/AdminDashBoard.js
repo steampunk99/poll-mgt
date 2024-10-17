@@ -33,96 +33,96 @@ export default function AdminDashboard() {
   })
   const [votesOverTime, setVotesOverTime] = useState([])
 
-
   useEffect(() => {
-    const fetchRecentPolls = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const pollsQuery = query(collection(db, 'polls'), orderBy('createdAt', 'desc'), limit(5));
-        const pollSnapshot = await getDocs(pollsQuery);
-        const pollList = pollSnapshot.docs.map(doc => ({
+        const now = Timestamp.now();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        // Get counts using server-side counting
+        const pollsRef = collection(db, 'polls');
+        const [totalCount, activeCount] = await Promise.all([
+          getCountFromServer(query(pollsRef)),
+          getCountFromServer(query(pollsRef, where('deadline', '>', now)))
+        ]);
+
+        // Fetch only recent polls with necessary data
+        const recentPollsQuery = query(
+          pollsRef,
+          orderBy('createdAt', 'desc'),
+          limit(5)
+        );
+        
+        // Fetch votes data for the last 30 days
+        const votesQuery = query(
+          pollsRef,
+          where('createdAt', '>', Timestamp.fromDate(thirtyDaysAgo)),
+          orderBy('createdAt', 'desc')
+        );
+
+        // Execute queries in parallel
+        const [recentPollsSnapshot, votesSnapshot] = await Promise.all([
+          getDocs(recentPollsQuery),
+          getDocs(votesQuery)
+        ]);
+
+        // Process recent polls
+        const recentPolls = recentPollsSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
-        setRecentPolls(pollList);
+
+        // Process votes data
+        const votesData = {};
+        votesSnapshot.forEach(doc => {
+          const poll = doc.data();
+          const date = poll.createdAt.toDate().toISOString().split('T')[0];
+          const votes = poll.choices.reduce((sum, choice) => sum + choice.votes, 0);
+          votesData[date] = (votesData[date] || 0) + votes;
+        });
+
+        // Convert votesData to array and sort
+        const votesArray = Object.entries(votesData)
+          .map(([date, votes]) => ({ date, votes }))
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        setDashboardData({
+          recentPolls,
+          pollsData: {
+            totalPolls: totalCount.data().count,
+            activePolls: activeCount.data().count,
+            inactivePolls: totalCount.data().count - activeCount.data().count
+          },
+          votesOverTime: votesArray,
+          loading: false
+        });
+
       } catch (error) {
-        console.error("Error fetching recent polls:", error);
+        console.error("Error fetching dashboard data:", error);
         toast({
           title: "Error",
-          description: "Failed to fetch recent polls. Please try again.",
+          description: "Failed to fetch dashboard data. Please try again.",
           variant: "destructive",
         });
-      } finally {
-        setLoading(false);
+        setDashboardData(prev => ({ ...prev, loading: false }));
       }
     };
 
-    fetchRecentPolls();
+    fetchDashboardData();
   }, [toast]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const pollsQuery = query(collection(db, 'polls'), orderBy('createdAt', 'desc'))
-        const pollSnapshot = await getDocs(pollsQuery)
-        
-        let total = 0
-        let active = 0
-        let inactive = 0
-        let votesData = {}
-        let recentPollsList = []
-
-        pollSnapshot.forEach(doc => {
-          const poll = doc.data()
-          total++
-          if (new Date(poll.deadline.toDate()) > new Date()) {
-            active++
-          } else {
-            inactive++
-          }
-
-          // Aggregate votes over time
-          const date = poll.createdAt.toDate().toISOString().split('T')[0]
-          const votes = poll.choices.reduce((sum, choice) => sum + choice.votes, 0)
-          if (votesData[date]) {
-            votesData[date] += votes
-          } else {
-            votesData[date] = votes
-          }
-
-          // Collect recent polls
-          if (recentPollsList.length < 5) {
-            recentPollsList.push({ id: doc.id, ...poll })
-          }
-        })
-
-        setPollsData({ totalPolls: total, activePolls: active, inactivePolls: inactive })
-
-        // Convert votesData to array and sort by date
-        const votesArray = Object.entries(votesData).map(([date, votes]) => ({ date, votes }))
-        votesArray.sort((a, b) => new Date(a.date) - new Date(b.date))
-        setVotesOverTime(votesArray)
-
-        setRecentPolls(recentPollsList)
-
-      } catch (error) {
-        console.error("Error fetching data:", error)
-      }
-    }
-
-    fetchData()
-  }, [])
-
   const formatDate = (timestamp) => {
-    if (!timestamp) return 'N/A'
-    const date = timestamp.toDate()
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-  }
+    if (!timestamp) return 'N/A';
+    const date = timestamp.toDate();
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  };
 
   const getTotalVotes = (choices) => {
-    return choices.reduce((total, choice) => total + choice.votes, 0)
-  }
+    return choices.reduce((total, choice) => total + choice.votes, 0);
+  };
 
-  if (loading) {
+  if (dashboardData.loading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
