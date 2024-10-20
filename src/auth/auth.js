@@ -7,10 +7,12 @@ import {
 } from "firebase/auth";
 import { auth, db } from "../lib/firebase";
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { useNavigate } from "react-router-dom";
 
 // Google and Apple providers for OAuth
 const googleProvider = new GoogleAuthProvider();
 const appleProvider = new OAuthProvider("apple.com");
+
 
 // Save user with default role 'voter' in Firestore
 const saveUserRole = async (user, role = 'voter') => {
@@ -43,13 +45,12 @@ const fetchUserRole = async (user) => {
 
 // Register with Email
 export const registerWithEmail = async (email, password, navigate) => {
+  
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     await saveUserRole(user); // Save role as 'voter'
-    
-    // After registering, navigate to the respective dashboard based on role
-    navigate('/dashboard/voter'); // Default for new users
+    navigate('/dashboard/voter');
     return user;
   } catch (error) {
     console.error("Error during registration:", error);
@@ -89,7 +90,7 @@ export const loginWithGoogle = async (navigate) => {
     if (!role) {
       // Save the default role if it's a new user
       await saveUserRole(user);
-      navigate('/dashboard/voter'); // Default for new users
+      navigate(role === 'admin' ? '/dashboard/admin' : '/dashboard/voter');
     } else {
       navigate(role === 'admin' ? '/dashboard/admin' : '/dashboard/voter');
     }

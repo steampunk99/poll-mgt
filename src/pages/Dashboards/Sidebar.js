@@ -8,7 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
 import { Sheet, SheetContent, SheetTrigger } from "../../components/ui/sheet";
 import { ScrollArea } from "../../components/ui/scroll-area";
 import { DarkModeContext } from '@/context/DarkMode';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../../components/ui/collapsible";
 import { Separator } from "../../components/ui/separator";
 
 import {
@@ -20,11 +19,8 @@ import {
   Menu,
   Moon,
   Sun,
-  User,
   LogOut,
   User2Icon,
-  Settings,
-  ChevronRight,
   Waypoints,
   Settings2
 } from 'lucide-react';
@@ -33,7 +29,6 @@ import { useToast } from "../../hooks/use-toast";
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -91,7 +86,7 @@ const Sidebar = () => {
   };
 
   const SidebarContent = () => (
-    <div className="flex fixed flex-col h-full border-r px-6">
+    <div className="flex fixed flex-col h-full border-r px-12">
       <div className="p-6 border-b">
         <div className="flex items-center space-x-3">
           <Avatar className="h-8 w-8">
@@ -117,44 +112,21 @@ const Sidebar = () => {
               <NavItem to="/dashboard/reports" icon={FileText}>Reports</NavItem>
               <NavItem to="/dashboard/logs" icon={Waypoints}>Audit Logs</NavItem>
               <NavItem to="/dashboard/profile" icon={Settings2}>Profile</NavItem>
-              {/* <Collapsible
-                open={isSettingsOpen}
-                onOpenChange={setIsSettingsOpen}
-                className="space-y-1"
-              >
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between px-3 py-2 text-sm">
-                    <div className="flex items-center">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Settings
-                    </div>
-                    <ChevronRight className={`h-4 w-4 transition-transform ${isSettingsOpen ? 'rotate-90' : ''}`} />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-1 pl-6">
-                  <NavItem to="/dashboard/settings/general" icon={Settings}>General</NavItem>
-                  <NavItem to="/dashboard/settings/security" icon={Settings}>Security</NavItem>
-                  <NavItem to="/dashboard/settings/notifications" icon={Settings}>Notifications</NavItem>
-                </CollapsibleContent>
-              </Collapsible> */}
+            
             </>
           )}
           {user?.role === 'voter' && (
             <>
-             <NavItem to="/dashboard/voter"  icon={Home}>Dashboard</NavItem>
+             <NavItem to="/dashboard/voter"  icon={Home}>Home</NavItem>
               <NavItem to="/dashboard/polls" icon={Vote}>Active Polls</NavItem>
               <NavItem to="/dashboard/voting-history" icon={History}>Vote History</NavItem>
+              <NavItem to="/dashboard/profile" icon={Settings2}>My Profile</NavItem>
             </>
           )}
         </nav>
       </ScrollArea>
       <div className="p-4 border-t space-y-2">
-        {/* <Button variant="outline" size="sm" className="w-full justify-start" asChild>
-          <Link to="/profile">
-            <User className="mr-2 h-4 w-4" />
-            Profile
-          </Link>
-        </Button> */}
+      
         <Button variant="ghost" size="sm" className="w-full justify-start" onClick={toggleDarkMode}>
           {darkMode ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
           

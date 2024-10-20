@@ -12,6 +12,7 @@ import { Loader2 } from 'lucide-react'
 import { useToast } from "../hooks/use-toast"
 import loginBG from '../assets/REG.png'
 import Header from '@/components/Header'
+import { useNavigate } from 'react-router-dom'
 
 export default function Register() {
   const [email, setEmail] = useState('')
@@ -19,6 +20,7 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate();
   const { toast } = useToast()
 
   const handleRegister = async (e) => {
@@ -48,7 +50,7 @@ export default function Register() {
     setError(null)
     setLoading(true)
     try {
-      await loginWithGoogle()
+      await loginWithGoogle(navigate)
       toast({
         title: "Registration Successful",
         description: "You have successfully registered with Google!",

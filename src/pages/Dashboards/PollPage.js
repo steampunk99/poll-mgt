@@ -85,8 +85,8 @@ export default function PollPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="max-w-2xl mx-auto">
+      <div className="px-4 py-8">
+        <Card className="w-[300px]">
           <CardHeader>
             <Skeleton className="h-8 w-3/4 mb-2" />
             <Skeleton className="h-4 w-1/2" />
@@ -121,8 +121,8 @@ export default function PollPage() {
   const isPollClosed = new Date(poll.deadline.toDate()) < new Date()
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card className="max-w-2xl mx-auto">
+    <div className=" px-4 py-8">
+      <Card className="max-w-2xl">
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>

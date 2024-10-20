@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { auth } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { Sun, Moon, LogOut, Menu, X, Home, Info, Mail, User } from 'lucide-react';
+import { Sun, Moon, LogOut, Menu, X, Home, Info, Mail, User, LayoutDashboardIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GoHome,GoHubot } from "react-icons/go";
@@ -18,15 +18,20 @@ import { DarkModeContext } from '@/context/DarkMode';
 import logoLight from '../assets/logoLight.png';
 import logoDark from '../assets/logoinverse.png';
 import { FaTerminal } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { useUser } from '@/context/UserContext';
 
 export default function Header() {
-  const [user, setUser] = useState(null);
+  const [users, setUsers] = useState(null);
+  const {user, setUser} = useUser()
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate()
+  
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+      setUsers(currentUser);
     });
 
     return () => unsubscribe();
@@ -36,6 +41,20 @@ export default function Header() {
     try {
       await auth.signOut();
       setIsOpen(false);
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
+  const handleDashboard = async () => {
+    try {
+      if(user){
+        if(user.role==="admin"){
+          navigate('/dashboard/admin')
+        }
+        else{
+          navigate('/dashboard/voter')
+        }
+      }
     } catch (error) {
       console.error("Error signing out: ", error);
     }
@@ -55,26 +74,31 @@ export default function Header() {
 
   const UserActions = ({ mobile = false }) => (
     <>
-      {user ? (
+      {users ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="relative h-8 rounded-full w-full justify-start">
               <Avatar className="h-8 w-8 mr-2">
-                <AvatarImage src={user.photoURL} alt={user.displayName} />
-                <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
+                <AvatarImage src={users.photoURL} alt={users.displayName} />
+                <AvatarFallback>{users.displayName?.charAt(0) || users.email?.charAt(0)}</AvatarFallback>
               </Avatar>
-              <span className={mobile ? "inline" : "hidden sm:inline"}>{user.displayName || user.email}</span>
+              <span className={mobile ? "inline" : "hidden sm:inline"}>{users.displayName || users.email}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuItem className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user.displayName}</p>
-                <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                <p className="text-sm font-medium leading-none">{users.displayName}</p>
+                <p className="text-xs leading-none text-muted-foreground">{users.email}</p>
+         
               </div>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/profile" onClick={() => mobile && setIsOpen(false)}>Profile</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleDashboard}>
+              <LayoutDashboardIcon className="mr-2 h-4 w-4" />
+              <span>Dashboard</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />

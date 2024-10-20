@@ -45,14 +45,7 @@ const UserProfilePage = () => {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await auth.signOut();
-      navigate("/login");
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+
 
   if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
 
@@ -125,7 +118,7 @@ const UserProfilePage = () => {
           {!editMode ? (
             <>
               <Button onClick={() => setEditMode(true)}>Edit Profile</Button>
-              <Button variant="outline" onClick={handleLogout}>Logout</Button>
+              {/* <Button variant="outline" onClick={handleLogout}>Logout</Button> */}
             </>
           ) : (
             <>
