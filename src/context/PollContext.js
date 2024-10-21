@@ -1,14 +1,11 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '../lib/firebase'; // Import Firestore instance
-import { collection,increment,where,query,orderBy,limit, getDocs, addDoc, deleteDoc, updateDoc, doc } from 'firebase/firestore';
+import { collection,arrayUnion,getDoc,where,query,orderBy,limit, getDocs, addDoc, deleteDoc, updateDoc, doc } from 'firebase/firestore';
 import { useUser } from './UserContext';
 
 
 // Create PollContext
 const PollContext = createContext();
-
- 
-
 
 // audit trail
 // Log actions to Firestore
@@ -171,31 +168,62 @@ export const PollProvider = ({ children }) => {
   useEffect(() => {
     fetchPolls();
   }, []);
-  // New functionality: Vote on a poll
-  const votePoll = async (pollId, choiceId, userId) => {
-    try {
-      const pollRef = doc(db, 'polls', pollId);
-      const choiceRef = doc(pollRef, 'choices', choiceId);
+
+
+  // // New functionality: Vote on a poll
+  // const votePoll = async (pollId, choiceId, userId) => {
+  //   try {
+  //     const pollRef = doc(db, 'polls', pollId);
+  //     const choiceRef = doc(pollRef, 'choices', choiceId);
       
-      await updateDoc(choiceRef, {
-        votes: increment(1)
-      });
+  //     await updateDoc(choiceRef, {
+  //       votes: increment(1)
+  //     });
 
-      // Record the user's vote
-      await addDoc(collection(db, 'votes'), {
-        pollId,
-        choiceId,
-        userId,
-        timestamp: new Date()
-      });
+  //     // Record the user's vote
+  //     await addDoc(collection(db, 'votes'), {
+  //       pollId,
+  //       choiceId,
+  //       userId,
+  //       timestamp: new Date()
+  //     });
 
-      await logAudit(userId, 'vote', { pollId, choiceId });
-      fetchPolls();
-    } catch (err) {
-      console.error("Error voting on poll:", err);
-      setError('Failed to vote on poll.');
+  //     await logAudit(userId, 'vote', { pollId, choiceId });
+  //     fetchPolls();
+  //   } catch (err) {
+  //     console.error("Error voting on poll:", err);
+  //     setError('Failed to vote on poll.');
+  //   }
+  // };
+
+  const votePoll = async (pollId, choiceId, userId) => {
+    const pollRef = doc(db, 'polls', pollId);
+    const pollSnap = await getDoc(pollRef);
+  
+    if (pollSnap.exists()) {
+      const pollData = pollSnap.data();
+  
+      // Check if the user has already voted
+      if (pollData.voters && pollData.voters.includes(userId)) {
+        throw new Error("User has already voted on this poll.");
+      }
+  
+      // Update the votes for the selected choice
+      const updatedChoices = pollData.choices.map(choice => 
+        choice.id === choiceId ? { ...choice, votes: choice.votes + 1 } : choice
+      );
+  
+      // Add the user ID to the voters list
+      await updateDoc(pollRef, {
+        choices: updatedChoices,
+        voters: arrayUnion(userId) // Add the user ID to the array of voters
+      });
+    } else {
+      throw new Error("Poll not found");
     }
   };
+  
+
 
   // New functionality: Get user's polls
   const getUserPolls = async (userId) => {
@@ -271,7 +299,7 @@ export const PollProvider = ({ children }) => {
         getPollResults,
         searchPolls,
         fetchActivePolls,
-        fetchPolls
+        
       }}
     >
       {children}

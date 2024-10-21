@@ -291,6 +291,7 @@ export default function PollsPage() {
       })
       return
     }
+
     try {
       await votePoll(pollId, choiceId, user.uid)
       toast({
@@ -300,12 +301,14 @@ export default function PollsPage() {
       })
       fetchPolls() // Refresh polls after voting
     } catch (error) {
+      console.error("Error voting on poll:", error) // Add this line
       toast({
         title: "Error",
         description: "Failed to record your vote. Please try again.",
         variant: "destructive",
       })
     }
+    
   }
 
   const getStatusBadge = (deadline) => {
@@ -385,7 +388,7 @@ export default function PollsPage() {
                           {poll.choices.map((choice, index) => (
                             <div key={index} className="space-y-1">
                               <div className="flex justify-between text-sm">
-                                <span>{choice.name}</span>
+                                <span>{choice.text}</span>
                                 <span>{choice.votes} votes</span>
                               </div>
                               <Progress value={(choice.votes / (poll.totalVotes || 1)) * 100} className="h-2" />

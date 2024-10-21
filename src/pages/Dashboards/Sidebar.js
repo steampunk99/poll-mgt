@@ -105,7 +105,7 @@ const Sidebar = () => {
           {user?.role === 'admin' && (
             <>
              <NavItem to="/dashboard/admin"  icon={Home}>Dashboard</NavItem>
-              <NavItem to="/dashboard/polls" icon={BarChart2}>Polls</NavItem>
+              {/* <NavItem to="/dashboard/polls" icon={BarChart2}>Polls</NavItem> */}
               <NavItem to="/dashboard/managepolls" icon={Vote}>Manage Polls</NavItem>
               <NavItem to="/dashboard/voting-history" icon={Vote}>Manage Voting</NavItem>
               <NavItem to="/dashboard/manage-users" icon={User2Icon}>Manage Users</NavItem>
