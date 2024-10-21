@@ -14,7 +14,7 @@ export default function HomePage() {
       <Header />
       <main className="flex-grow">
         <HeroSection />
-        <ActivePollsSection />
+        {/* <ActivePollsSection /> */}
         <FeaturesSection />
         {/* <TestimonialsSection /> */}
         <CallToActionSection />
