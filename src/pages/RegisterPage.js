@@ -85,13 +85,13 @@ export default function Register() {
       <Header/>
       <div className="hidden relative lg:block lg:w-1/2 bg-background">
         <img 
-          src="https://images.pexels.com/photos/6185245/pexels-photo-6185245.jpeg?auto=compress&cs=tinysrgb&w=600"
+          src="https://www.psfuganda.org/images/gallery/AFR_3030.jpg"
           alt="Register illustration" 
           className="w-full absolute h-full object-cover"
         />
       </div>
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-6 bg-card text-card-foreground rounded-xl shadow-lg p-8">
+        <div className="w-full max-w-md space-y-6 bg-card text-card-foreground p-8">
           <h2 className="text-3xl font-bold text-center">CREATE ACCOUNT</h2>
           {error && (
             <Alert variant="destructive">
