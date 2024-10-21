@@ -10,14 +10,17 @@ import loginBG from '../assets/Green and Pink Voter Education Flyers.png'
 import { useUser } from '@/context/UserContext'
 import { auth, db } from "@/lib/firebase"
 import { doc, getDoc, getDocs,addDoc ,collection, updateDoc, setDoc, deleteDoc } from "firebase/firestore"
+import { Loader2 } from 'lucide-react'
 import Header from '@/components/Header'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const {user} = useUser()
+
 
   // audit logs
     // audit log
@@ -37,6 +40,7 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault()
     setError(null)
+    setLoading(true)
     setSuccess(false)
     try {
       await loginWithEmail(email, password)
@@ -44,18 +48,21 @@ export default function Login() {
       setSuccess(true)
     } catch (err) {
       setError(err.message)
+      setLoading(false)
     }
   }
 
   const handleGoogleLogin = async () => {
     setError(null)
     setSuccess(false)
+    setLoading(true)
     try {
       await loginWithGoogle()
       await logUserAction(user?.uid, 'login user', { email });
       setSuccess(true)
     } catch (err) {
       setError(err.message)
+      setLoading(false)
     }
   }
 
@@ -117,7 +124,12 @@ export default function Login() {
                 required 
               />
             </div>
-            <Button type="submit" className="w-full">LOGIN</Button>
+            <Button type="submit" className="w-full">
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+               LOGIN
+               
+               </Button>
+            
           </form>
           <div className="flex flex-col space-y-4">
             <Button onClick={handleGoogleLogin} variant="outline" className="w-full">
