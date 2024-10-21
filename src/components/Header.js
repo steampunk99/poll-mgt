@@ -17,7 +17,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DarkModeContext } from '@/context/DarkMode';
 import logoLight from '../assets/logoLight.png';
 import logoDark from '../assets/logoinverse.png';
-import { FaTerminal } from 'react-icons/fa';
+import { FaTerminal, FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '@/context/UserContext';
 
@@ -109,10 +109,10 @@ export default function Header() {
       ) : (
         <>
           <Button variant={mobile ? "outline" : "outline"} size="sm" asChild className="text-background bg-foreground w-full justify-start" onClick={() => mobile && setIsOpen(false)}>
-            <Link to="/login"><ImTerminal className="mr-2 h-4 w-4" /> Login</Link>
+            <Link to="/login"><FaUser className="mr-2 h-4 w-4" /> Login</Link>
           </Button>
           <Button variant={mobile ? "outline" : "outline"} size="sm" asChild className="text-foreground bg-transparent w-full justify-start" onClick={() => mobile && setIsOpen(false)}>
-            <Link to="/register"><ImTerminal className="mr-2 h-4 w-4" /> Create account</Link>
+            <Link to="/register"><FaUser className="mr-2 h-4 w-4" /> Create account</Link>
           </Button>
         </>
       )}
