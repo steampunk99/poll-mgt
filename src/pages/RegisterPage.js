@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom'
 import { FaGoogle, FaApple } from 'react-icons/fa'
 import { Loader2 } from 'lucide-react'
 import { useToast } from "../hooks/use-toast"
-import loginBG from '../assets/REG.png'
+import loginBG from '../assets/register.png'
 import Header from '@/components/Header'
 import { useNavigate } from 'react-router-dom'
 
@@ -81,17 +81,17 @@ export default function Register() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-red-500">
       <Header/>
-      <div className="hidden relative lg:block lg:w-1/2 bg-background">
+      <div className="hidden relative lg:block lg:w-1/2 ">
         <img 
-          src="https://www.psfuganda.org/images/gallery/AFR_3030.jpg"
+          src={loginBG}
           alt="Register illustration" 
           className="w-full absolute h-full object-cover"
         />
       </div>
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-6 bg-card text-card-foreground p-8">
+        <div className="w-full max-w-md space-y-6 bg-card/50 border rounded-lg text-card-foreground p-10 shadow-md">
           <h2 className="text-3xl font-bold text-center">CREATE ACCOUNT</h2>
           {error && (
             <Alert variant="destructive">

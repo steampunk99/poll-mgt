@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { loginWithEmail, loginWithGoogle, loginWithApple } from '../auth/auth'
 import { Link } from 'react-router-dom'
 import { FaGoogle, FaApple } from 'react-icons/fa'
-import loginBG from '../assets/Green and Pink Voter Education Flyers.png'
+import loginBG from '../assets/login.png'
 import { useUser } from '@/context/UserContext'
 import { auth, db } from "@/lib/firebase"
 import { doc, getDoc, getDocs,addDoc ,collection, updateDoc, setDoc, deleteDoc } from "firebase/firestore"
@@ -82,7 +82,7 @@ export default function Login() {
       <Header className="mb-6" />
       <div className="relative hidden min-h-screen w-full  lg:block lg:w-1/2  items-center justify-center">
         <img 
-          src="https://www.psfuganda.org/images/gallery/AFR_3030.jpg"
+          src={loginBG}
           alt="Login illustration" 
           className=" rounded-lg absolute w-full h-screen object-cover" 
           
@@ -144,7 +144,7 @@ export default function Login() {
               Forgot password?
             </Link>
             <Link to="/register" className="text-primary hover:underline">
-              Register
+              Register  now
             </Link>
           </div>
         </div>

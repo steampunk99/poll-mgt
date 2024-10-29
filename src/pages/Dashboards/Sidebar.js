@@ -117,8 +117,8 @@ const Sidebar = () => {
           )}
           {user?.role === 'voter' && (
             <>
-             <NavItem to="/dashboard/voter"  icon={Home}>Home</NavItem>
-              <NavItem to="/dashboard/polls" icon={Vote}>Active Polls</NavItem>
+             <NavItem to="/dashboard/polls"  icon={Home}>Home</NavItem>
+              {/* <NavItem to="/dashboard/polls" icon={Vote}>Active Polls</NavItem> */}
               <NavItem to="/dashboard/voting-history" icon={History}>Vote History</NavItem>
               <NavItem to="/dashboard/profile" icon={Settings2}>My Profile</NavItem>
             </>

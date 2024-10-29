@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '../lib/firebase'; // Import Firestore instance
-import { collection,arrayUnion,getDoc,where,query,orderBy,limit, getDocs, addDoc, deleteDoc, updateDoc, doc } from 'firebase/firestore';
+import { serverTimestamp, collection,arrayUnion,getDoc,where,query,orderBy,limit, getDocs, addDoc, deleteDoc, updateDoc, doc } from 'firebase/firestore';
 import { useUser } from './UserContext';
 
 
@@ -170,42 +170,59 @@ export const PollProvider = ({ children }) => {
   }, []);
 
 
-  // // New functionality: Vote on a poll
-  // const votePoll = async (pollId, choiceId, userId) => {
-  //   try {
-  //     const pollRef = doc(db, 'polls', pollId);
-  //     const choiceRef = doc(pollRef, 'choices', choiceId);
-      
-  //     await updateDoc(choiceRef, {
-  //       votes: increment(1)
-  //     });
-
-  //     // Record the user's vote
-  //     await addDoc(collection(db, 'votes'), {
-  //       pollId,
-  //       choiceId,
-  //       userId,
-  //       timestamp: new Date()
-  //     });
-
-  //     await logAudit(userId, 'vote', { pollId, choiceId });
-  //     fetchPolls();
-  //   } catch (err) {
-  //     console.error("Error voting on poll:", err);
-  //     setError('Failed to vote on poll.');
-  //   }
-  // };
-
   const votePoll = async (pollId, choiceId, userId) => {
-    const pollRef = doc(db, 'polls', pollId);
-    const pollSnap = await getDoc(pollRef);
+    try {
+      // Get user document to check role
+      const userRef = doc(db, 'users', userId);
+      const userSnap = await getDoc(userRef);
+      
+      if (!userSnap.exists()) {
+        throw new Error("User not found");
+      }
   
-    if (pollSnap.exists()) {
+      const userData = userSnap.data();
+      
+      // Check if user is admin
+      if (userData.role === 'admin') {
+        throw new Error("Administrators are not allowed to vote");
+      }
+  
+      // Check if user is active
+      if (!userData.isActive) {
+        throw new Error("Your account is currently inactive");
+      }
+  
+      const pollRef = doc(db, 'polls', pollId);
+      const pollSnap = await getDoc(pollRef);
+  
+      if (!pollSnap.exists()) {
+        throw new Error("Poll not found");
+      }
+  
       const pollData = pollSnap.data();
+  
+      // Check poll visibility
+      if (pollData.visibility === 'private') {
+        throw new Error("This poll is not currently available for voting");
+      }
+  
+      // Check if poll is still active
+      const now = new Date();
+      const deadline = pollData.deadline.toDate();
+      
+      if (now > deadline) {
+        throw new Error("This poll has expired");
+      }
   
       // Check if the user has already voted
       if (pollData.voters && pollData.voters.includes(userId)) {
-        throw new Error("User has already voted on this poll.");
+        throw new Error("You have already voted on this poll");
+      }
+  
+      // Validate that the choice exists in the poll
+      const choiceExists = pollData.choices.some(choice => choice.id === choiceId);
+      if (!choiceExists) {
+        throw new Error("Invalid choice selected");
       }
   
       // Update the votes for the selected choice
@@ -213,17 +230,26 @@ export const PollProvider = ({ children }) => {
         choice.id === choiceId ? { ...choice, votes: choice.votes + 1 } : choice
       );
   
-      // Add the user ID to the voters list
-      await updateDoc(pollRef, {
+      // Prepare the update object
+      const updateObject = {
         choices: updatedChoices,
-        voters: arrayUnion(userId) // Add the user ID to the array of voters
-      });
-    } else {
-      throw new Error("Poll not found");
+        voters: arrayUnion(userId),
+        lastVoteAt: serverTimestamp() // Optional: track when the last vote was cast
+      };
+  
+      // Update the poll document
+      await updateDoc(pollRef, updateObject);
+  
+      return {
+        success: true,
+        message: "Vote recorded successfully"
+      };
+  
+    } catch (error) {
+      // Add custom error handling here if needed
+      throw error;
     }
   };
-  
-
 
   // New functionality: Get user's polls
   const getUserPolls = async (userId) => {
