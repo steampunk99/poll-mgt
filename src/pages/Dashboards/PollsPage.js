@@ -208,12 +208,13 @@ export default function PollsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Polls</h1>
         <div className="flex gap-2">
-          <Button onClick={handleCreatePoll}>
+          {/* <Button onClick={handleCreatePoll}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Create Poll
-          </Button>
+          </Button> */}
           <Button variant="outline" onClick={handleRefresh}>
             <RefreshCw className="mr-2 h-4 w-4" />
+          
             Refresh
           </Button>
         </div>
