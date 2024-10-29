@@ -81,7 +81,7 @@ export default function Register() {
   }
 
   return (
-    <div className="flex min-h-screen bg-red-500">
+    <div className="flex min-h-screen bg-background/20">
       <Header/>
       <div className="hidden relative lg:block lg:w-1/2 ">
         <img 

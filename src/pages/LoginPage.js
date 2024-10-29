@@ -78,7 +78,7 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-card/40 dark:bg-card-50">
       <Header className="mb-6" />
       <div className="relative hidden min-h-screen w-full  lg:block lg:w-1/2  items-center justify-center">
         <img 
@@ -89,7 +89,7 @@ export default function Login() {
         />
       </div>
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-6 bg-card text-card-foreground  p-8">
+        <div className="w-full max-w-md space-y-6 bg-card/50  border rounded-lg text-card-foreground p-10 shadow-md">
           <h2 className="text-3xl font-bold text-center">LOGIN</h2>
           {error && (
             <Alert variant="destructive">
