@@ -17,7 +17,7 @@ import { useToast } from "../../hooks/use-toast";
 import { Loader2, PlusCircle, List,TrendingUp } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Label } from '../../components/ui/label';
-
+import { toast } from '../../hooks/use-toast';
 import {
   Table,
   TableBody,
@@ -32,16 +32,6 @@ import { PieChart, Pie, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, R
 import PollStatsDashboard from './charts/PollEngagement';
 
 export default function AdminDashboard() {
-  const [recentPolls, setRecentPolls] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-
-  const [pollsData, setPollsData] = useState({
-    totalPolls: 0,
-    activePolls: 0,
-    inactivePolls: 0,
-  })
-  const [votesOverTime, setVotesOverTime] = useState([])
   
   const [dashboardData, setDashboardData] = useState({
     recentPolls: [],
@@ -53,6 +43,8 @@ export default function AdminDashboard() {
     votesOverTime: [],
     loading: true
   });
+
+  
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -174,7 +166,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <Card>
+      <Card className='w-full p-4'>
         <Table>
           <TableCaption>A list of your most recent polls.</TableCaption>
           <TableHeader>
@@ -187,28 +179,30 @@ export default function AdminDashboard() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recentPolls.map((poll) => (
-              <TableRow key={poll.id}>
-                <TableCell className="font-medium">{poll.question}</TableCell>
-                <TableCell>{formatDate(poll.deadline)}</TableCell>
-                <TableCell>{getTotalVotes(poll.choices)}</TableCell>
-                <TableCell>
-                  {new Date(poll.deadline.toDate()) > new Date() ? (
-                    <span className="text-green-600">Active</span>
-                  ) : (
-                    <span className="text-red-600">Closed</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button asChild variant="ghost" size="sm">
-                    <Link to={`/poll/${poll.id}`}>
-                     View Results
-                    </Link>
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
+  {dashboardData.recentPolls.map((poll) => (
+    <TableRow key={poll.id}>
+      <TableCell className="font-medium">{poll.question}</TableCell>
+      <TableCell>{formatDate(poll.deadline)}</TableCell>
+      <TableCell>{getTotalVotes(poll.choices)}</TableCell>
+      <TableCell>
+        {poll.status === 'closed' ? (
+          <span className="text-red-600">Closed</span>
+        ) : new Date(poll.deadline.toDate()) > new Date() ? (
+          <span className="text-green-600">Active</span>
+        ) : (
+          <span className="text-red-600">Expired</span>
+        )}
+      </TableCell>
+      <TableCell className="text-right">
+        <Button asChild variant="ghost" size="sm">
+          <Link to={`/dashboard/poll/${poll.id}`}>
+            View Results
+          </Link>
+        </Button>
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
         </Table>
       </Card>
       <AuditLogs/>

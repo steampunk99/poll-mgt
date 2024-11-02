@@ -30,6 +30,12 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Card } from '@/components/ui/card'
 
+// helper function to calculate total votes
+const calculateTotalVotes = (choices) => {
+  return choices.reduce((total, choice) => total + (choice.votes || 0), 0);
+};
+
+
 export default function ManagePollsPage() {
   const [polls, setPolls] = useState([])
   const [loading, setLoading] = useState(true)
@@ -132,7 +138,7 @@ export default function ManagePollsPage() {
               <TableHead className="w-[300px]">Question</TableHead>
               <TableHead>Deadline</TableHead>
               <TableHead>Status</TableHead>
-         
+              <TableHead>Total Votes</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -146,7 +152,7 @@ export default function ManagePollsPage() {
                     {new Date(poll.deadline.seconds * 1000) > new Date() ? "Active" : "Closed"}
                   </Badge>
                 </TableCell>
-               
+                <TableCell>{calculateTotalVotes(poll.choices)}</TableCell>
                 <TableCell className="text-right">
                   <Button variant="ghost" size="icon" onClick={() => handleEdit(poll.id)}>
                     <Edit className="h-4 w-4" />

@@ -11,6 +11,8 @@ import { Loader2, ChevronLeft, Check } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Textarea } from "@/components/ui/textarea"
+import { serverTimestamp } from 'firebase/firestore'
 
 export default function PollPage() {
   const { pollId } = useParams()
@@ -21,7 +23,9 @@ export default function PollPage() {
   const [hasVoted, setHasVoted] = useState(false)
   const [selectedChoice, setSelectedChoice] = useState(null)
   const [isVoting, setIsVoting] = useState(false)
+  const [voteReason, setVoteReason] = useState("");
   const { toast } = useToast()
+
 
   useEffect(() => {
     const foundPoll = polls.find((p) => p.id === pollId)
@@ -47,41 +51,59 @@ export default function PollPage() {
     return daysLeft > 0 ? `${daysLeft} day(s) left` : 'Closed'
   }
 
-  const handleVote = async (pollId, choiceIndex) => {
-    try {
-      const currentPoll = polls.find(p => p.id === pollId);
-      if (!currentPoll) throw new Error('Poll not found');
+//  vote function
+const handleVote = async (pollId, choiceIndex) => {
+  try {
+    setIsVoting(true);
+    const currentPoll = polls.find(p => p.id === pollId);
+    if (!currentPoll) throw new Error('Poll not found');
 
-      // Create updated choices array
-      const updatedChoices = currentPoll.choices.map((choice, index) => ({
-        ...choice,
-        votes: index === choiceIndex ? (choice.votes || 0) + 1 : (choice.votes || 0)
-      }));
+    // Create updated choices array with default values for votes
+    const updatedChoices = currentPoll.choices.map((choice, index) => ({
+      ...choice,
+      id: choice.id || `choice-${index}`, // Ensure each choice has an ID
+      text: choice.text || '',
+      votes: index === choiceIndex ? ((choice.votes || 0) + 1) : (choice.votes || 0)
+    }));
 
-      // Create updated voters array
-      const updatedVoters = [...(currentPoll.voters || []), user.uid];
+    // Create voter entry with reason
+    const voterEntry = {
+      userId: user.uid,
+      choiceId: currentPoll.choices[choiceIndex].id || `choice-${choiceIndex}`,
+      reason: voteReason?.trim() || '',
+      votedAt: new Date()
+    };
 
-      // Update the poll
-      await updatePoll(pollId, {
-        choices: updatedChoices,
-        voters: updatedVoters
-      });
+    // Get current voters array or initialize it
+    const currentVoters = Array.isArray(currentPoll.voters) ? currentPoll.voters : [];
 
-      // Show success message
-      toast({
-        title: "Success",
-        description: "Your vote has been recorded",
-      });
+    // Update the poll with validated data
+    await updatePoll(pollId, {
+      choices: updatedChoices,
+      voters: [...currentVoters, voterEntry]
+    });
 
-    } catch (error) {
-      console.error('Error voting:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to submit vote",
-        variant: "destructive",
-      });
-    }
-  };
+    setHasVoted(true);
+    setSelectedChoice(null);
+    setVoteReason("");
+
+    toast({
+      title: "Success",
+      description: "Your vote has been recorded",
+    });
+
+  } catch (error) {
+    console.error('Error voting:', error);
+    toast({
+      title: "Error",
+      description: error.message || "Failed to submit vote",
+      variant: "destructive",
+    });
+  } finally {
+    setIsVoting(false);
+  }
+};
+
 
   if (loading) {
     return (
@@ -165,12 +187,57 @@ export default function PollPage() {
                     value={totalVotes > 0 ? (choice.votes / totalVotes) * 100 : 0}
                     className="h-2"
                   />
+                
+{hasVoted && poll.voters && (
+  <div className="mt-2">
+    {poll.voters
+      .filter(voter => voter.choiceId === choice.id && voter.reason)
+      .map((voter, vIndex) => (
+        <div key={vIndex} className="text-sm text-muted-foreground mt-1 pl-4 border-l-2">
+          "{voter.reason}"
+        </div>
+      ))}
+  </div>
+)}
                   <span className="absolute my-2 right-0 top-0 text-xs text-muted-foreground">
                     {totalVotes > 0 ? ((choice.votes / totalVotes) * 100).toFixed(1) : 0}%
                   </span>
+                  {selectedChoice === index && !hasVoted && !isPollClosed && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-4"
+                >
+                  <label className="text-sm font-medium mb-2 block">
+                    Why did you choose this option? (Optional)
+                  </label>
+                  <Textarea
+                    placeholder="Share your reason for voting..."
+                    value={voteReason}
+                    onChange={(e) => setVoteReason(e.target.value)}
+                    className="w-full"
+                    rows={3}
+                  />
+                </motion.div>
+              )}
+
+                 {/* Show reasons for votes */}
+                 {hasVoted && poll.voters && (
+                <div className="mt-2">
+                  {poll.voters
+                    .filter(voter => voter.choiceId === choice.id && voter.reason)
+                    .map((voter, vIndex) => (
+                      <div key={vIndex} className="text-sm text-muted-foreground mt-1 pl-4 border-l-2">
+                        "{voter.reason}"
+                      </div>
+                    ))}
                 </div>
-              </motion.div>
-            ))}
+              )}
+            </div>
+          </motion.div>
+        ))}
+             
           </div>
         </CardContent>
         <CardFooter className="flex justify-between items-center">

@@ -101,34 +101,49 @@ export const PollProvider = ({ children }) => {
     }
   };
 
-// Update a poll
+// update a poll
 const updatePoll = async (pollId, updatedData) => {
   try {
     const pollDoc = doc(db, 'polls', pollId);
     
-    // Prepare the update object with only the fields that should be updated
-    const updateObject = {
-      choices: updatedData.choices,
-      voters: updatedData.voters,
-      lastVoteAt: serverTimestamp()
-    };
+    // Create a clean update object
+    const updateObject = {};
 
-    // Update the document
-    await updateDoc(pollDoc, updateObject);
-    await logAudit(user?.uid, 'update_poll', { pollId, updateObject });
-    
-    // Refresh the polls list
-    fetchPolls();
-    fetchActivePolls(); // Also refresh active polls if needed
-    
-    return { success: true };
+    // Safely add choices if they exist and are valid
+    if (Array.isArray(updatedData.choices)) {
+      updateObject.choices = updatedData.choices;
+    }
+
+    // Safely add voters if they exist and are valid
+    if (Array.isArray(updatedData.voters)) {
+      updateObject.voters = updatedData.voters;
+    }
+
+    // Add timestamp
+    updateObject.lastUpdated = serverTimestamp();
+
+    // Remove any undefined values
+    Object.keys(updateObject).forEach(key => {
+      if (updateObject[key] === undefined) {
+        delete updateObject[key];
+      }
+    });
+
+    // Only proceed if we have valid data to update
+    if (Object.keys(updateObject).length > 0) {
+      await updateDoc(pollDoc, updateObject);
+      await logAudit(user?.uid, 'update_poll', { pollId });
+      await fetchPolls();
+      return { success: true };
+    }
+
+    return { success: false, error: 'No valid data to update' };
   } catch (err) {
     console.error("Error updating poll:", err);
     setError('Failed to update poll.');
-    throw err; // Propagate error to handle it in the component
+    throw err;
   }
 };
-
   // Delete a poll
   const deletePoll = async (pollId) => {
     try {
@@ -144,11 +159,18 @@ const updatePoll = async (pollId, updatedData) => {
   // Close a poll (change status to closed)
   const closePoll = async (pollId) => {
     try {
-      await updatePoll(pollId, { status: 'closed' });
+      const pollRef = doc(db, 'polls', pollId);
+      await updateDoc(pollRef, { 
+        status: 'closed',
+        closedAt: serverTimestamp()
+      });
       await logAudit(user?.uid, 'close_poll', { pollId });
+      // Refresh polls after closing
+      await fetchPolls();
     } catch (err) {
       console.error("Error closing poll:", err);
       setError('Failed to close poll.');
+      throw err;
     }
   };
 
@@ -190,6 +212,9 @@ const updatePoll = async (pollId, updatedData) => {
       // Get user document to check role
       const userRef = doc(db, 'users', userId);
       const userSnap = await getDoc(userRef);
+      const pollRef = doc(db, 'polls', pollId);
+      const pollSnap = await getDoc(pollRef);
+      const pollData = pollSnap.data();
       
       if (!userSnap.exists()) {
         throw new Error("User not found");
@@ -207,14 +232,9 @@ const updatePoll = async (pollId, updatedData) => {
         throw new Error("Your account is currently inactive");
       }
   
-      const pollRef = doc(db, 'polls', pollId);
-      const pollSnap = await getDoc(pollRef);
-  
       if (!pollSnap.exists()) {
         throw new Error("Poll not found");
       }
-  
-      const pollData = pollSnap.data();
   
       // Check poll visibility
       if (pollData.visibility === 'private') {
@@ -241,19 +261,26 @@ const updatePoll = async (pollId, updatedData) => {
       }
   
       // Update the votes for the selected choice
-      const updatedChoices = pollData.choices.map(choice => 
-        choice.id === choiceId ? { ...choice, votes: choice.votes + 1 } : choice
-      );
-  
-      // Prepare the update object
-      const updateObject = {
-        choices: updatedChoices,
-        voters: arrayUnion(userId),
-        lastVoteAt: serverTimestamp() // Optional: track when the last vote was cast
-      };
-  
-      // Update the poll document
-      await updateDoc(pollRef, updateObject);
+     // Create a voter entry with both ID and choice
+     const voterEntry = {
+      userId: userId,
+      choiceId: choiceId,
+      votedAt: serverTimestamp()
+    };
+
+    // Update the votes for the selected choice
+    const updatedChoices = pollData.choices.map(choice => 
+      choice.id === choiceId ? { ...choice, votes: (choice.votes || 0) + 1 } : choice
+    );
+
+    // Update the poll document with both the choices and voter info
+    const updateObject = {
+      choices: updatedChoices,
+      voters: arrayUnion(voterEntry), // Store full voter info instead of just ID
+      lastVoteAt: serverTimestamp()
+    };
+
+    await updateDoc(pollRef, updateObject);
   
       return {
         success: true,
@@ -282,20 +309,24 @@ const updatePoll = async (pollId, updatedData) => {
   const getPollResults = async (pollId) => {
     try {
       const pollRef = doc(db, 'polls', pollId);
-      const votesSnapshot = await getDocs(collection(pollRef, 'votes'));
-      const votes = votesSnapshot.docs.map(doc => doc.data());
+      const pollSnap = await getDoc(pollRef);
       
-      // Process votes and return results
-      // This is a simple implementation; you might want to add more complex analysis
-      const results = votes.reduce((acc, vote) => {
-        acc[vote.choiceId] = (acc[vote.choiceId] || 0) + 1;
-        return acc;
-      }, {});
-
+      if (!pollSnap.exists()) {
+        return {};
+      }
+  
+      const pollData = pollSnap.data();
+      // Create a results object mapping choice IDs to their vote counts
+      const results = {};
+      pollData.choices.forEach(choice => {
+        results[choice.id] = choice.votes || 0;
+      });
+  
       return results;
     } catch (err) {
       console.error("Error fetching poll results:", err);
       setError('Failed to fetch poll results.');
+      return {};
     }
   };
 

@@ -13,17 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Progress } from "@/components/ui/progress";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function VotingHistory() {
@@ -42,6 +32,7 @@ export default function VotingHistory() {
       await fetchPolls();
       if (!isAdmin && user) {
         const votedPolls = await getUserPolls(user.uid);
+        console.log('User Polls:', votedPolls);
         setUserPolls(votedPolls);
       }
       setLoading(false);
@@ -69,27 +60,29 @@ export default function VotingHistory() {
     });
   };
 
-  const handleDeletePoll = async () => {
-    if (selectedPollId) {
-      await deletePoll(selectedPollId);
-      setDeleteDialogOpen(false);
-      await fetchPolls();
-    }
-  };
-
+ 
   const handleClosePoll = async (pollId) => {
     await closePoll(pollId);
     await fetchPolls();
   };
 
   const calculateTotalVotes = (pollId) => {
-    const results = pollResults[pollId];
-    if (!results) return 0;
-    return Object.values(results).reduce((sum, votes) => sum + votes, 0);
+    const poll = polls.find(p => p.id === pollId);
+    if (!poll || !poll.choices) return 0;
+    
+    // Sum up votes from all choices
+    return poll.choices.reduce((sum, choice) => sum + (choice.votes || 0), 0);
   };
 
   const renderPollCard = (poll) => {
     const totalVotes = calculateTotalVotes(poll.id);
+
+      // Get the user's vote for this specific poll
+      const userPoll = userPolls?.find(p => p.id === poll.id);
+      console.log('User vote for poll:', poll.id, userPoll?.userVote); // Debug log
+       // Debug log
+
+
     return (
       <Card key={poll.id} className={poll.status === 'closed' ? 'opacity-75' : ''}>
         <CardHeader>
@@ -126,17 +119,7 @@ export default function VotingHistory() {
                   <Lock className="h-4 w-4 mr-1" />
                   Close Poll
                 </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedPollId(poll.id);
-                    setDeleteDialogOpen(true);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
-                </Button>
+            
               </div>
             )}
           </div>
@@ -152,30 +135,30 @@ export default function VotingHistory() {
     </TableRow>
   </TableHeader>
   <TableBody>
-    {poll.choices.map((choice, index) => {
-      const votes = pollResults[poll.id]?.[choice.id] || 0;
-      const totalVotes = calculateTotalVotes(poll.id); // Ensure total votes are calculated here
-      const percentage = totalVotes > 0 ? (votes / totalVotes) * 100 : 0;
+  {poll.choices.map((choice, index) => {
+    const votes = choice.votes || 0;
+    const totalVotes = poll.choices.reduce((sum, c) => sum + (c.votes || 0), 0);
+    
 
-      return (
-        <TableRow key={index}>
-          <TableCell>{choice.text}</TableCell>
-          <TableCell>{votes}</TableCell>
-        
-          {!isAdmin && (
-            <TableCell>
-              {poll.userVote === choice.id && (
-                <Badge variant="secondary">
-                  <CheckCircle2 className="h-4 w-4 mr-1" />
-                  Your Vote
-                </Badge>
-              )}
-            </TableCell>
-          )}
-        </TableRow>
-      );
-    })}
-  </TableBody>
+
+    return (
+      <TableRow key={index}>
+        <TableCell>{choice.text}</TableCell>
+        <TableCell>{votes}</TableCell>
+        {!isAdmin && (
+          <TableCell>
+            {userPoll?.userVote === choice.text && (
+              <Badge variant="secondary">
+                <CheckCircle2 className="h-4 w-4 mr-1" />
+                Your Vote
+              </Badge>
+            )}
+          </TableCell>
+        )}
+      </TableRow>
+    );
+  })}
+</TableBody>
 </Table>
 
         </CardContent>
@@ -288,23 +271,7 @@ export default function VotingHistory() {
         </Tabs>
       )}
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the poll
-              and all associated votes.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeletePoll} className="bg-destructive text-destructive-foreground">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+   
     </div>
   );
 }
