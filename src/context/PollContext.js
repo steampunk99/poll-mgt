@@ -101,18 +101,33 @@ export const PollProvider = ({ children }) => {
     }
   };
 
-  // Update a poll
-  const updatePoll = async (pollId, updatedData) => {
-    try {
-      const pollDoc = doc(db, 'polls', pollId);
-      await updateDoc(pollDoc, updatedData);
-      await logAudit(user?.uid, 'update_poll', { updatedData });
-      fetchPolls();
-    } catch (err) {
-      console.error("Error updating poll:", err);
-      setError('Failed to update poll.');
-    }
-  };
+// Update a poll
+const updatePoll = async (pollId, updatedData) => {
+  try {
+    const pollDoc = doc(db, 'polls', pollId);
+    
+    // Prepare the update object with only the fields that should be updated
+    const updateObject = {
+      choices: updatedData.choices,
+      voters: updatedData.voters,
+      lastVoteAt: serverTimestamp()
+    };
+
+    // Update the document
+    await updateDoc(pollDoc, updateObject);
+    await logAudit(user?.uid, 'update_poll', { pollId, updateObject });
+    
+    // Refresh the polls list
+    fetchPolls();
+    fetchActivePolls(); // Also refresh active polls if needed
+    
+    return { success: true };
+  } catch (err) {
+    console.error("Error updating poll:", err);
+    setError('Failed to update poll.');
+    throw err; // Propagate error to handle it in the component
+  }
+};
 
   // Delete a poll
   const deletePoll = async (pollId) => {

@@ -47,41 +47,41 @@ export default function PollPage() {
     return daysLeft > 0 ? `${daysLeft} day(s) left` : 'Closed'
   }
 
-  const handleVote = async () => {
-    if (hasVoted || !selectedChoice) return
-    setIsVoting(true)
-
-    const updatedPoll = {
-      ...poll,
-      choices: poll.choices.map((choice, index) => {
-        if (index === selectedChoice) {
-          return { ...choice, votes: choice.votes + 1 }
-        }
-        return choice
-      }),
-      voters: [...(poll.voters || []), user.uid]
-    }
-
+  const handleVote = async (pollId, choiceIndex) => {
     try {
-      await updatePoll(pollId, updatedPoll)
-      setPoll(updatedPoll)
-      setHasVoted(true)
+      const currentPoll = polls.find(p => p.id === pollId);
+      if (!currentPoll) throw new Error('Poll not found');
+
+      // Create updated choices array
+      const updatedChoices = currentPoll.choices.map((choice, index) => ({
+        ...choice,
+        votes: index === choiceIndex ? (choice.votes || 0) + 1 : (choice.votes || 0)
+      }));
+
+      // Create updated voters array
+      const updatedVoters = [...(currentPoll.voters || []), user.uid];
+
+      // Update the poll
+      await updatePoll(pollId, {
+        choices: updatedChoices,
+        voters: updatedVoters
+      });
+
+      // Show success message
       toast({
-        title: "Vote Submitted",
-        description: "Your vote has been successfully recorded.",
-        duration: 3000,
-      })
+        title: "Success",
+        description: "Your vote has been recorded",
+      });
+
     } catch (error) {
-      console.error("Error updating poll:", error)
+      console.error('Error voting:', error);
       toast({
         title: "Error",
-        description: "Failed to submit your vote. Please try again.",
+        description: error.message || "Failed to submit vote",
         variant: "destructive",
-      })
-    } finally {
-      setIsVoting(false)
+      });
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -139,22 +139,27 @@ export default function PollPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {poll.choices.map((choice, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Button
-                  variant={selectedChoice === index ? "secondary" : "outline"}
-                  className="w-full justify-between h-auto py-3"
-                  onClick={() => !hasVoted && !isPollClosed && setSelectedChoice(index)}
-                  disabled={hasVoted || isPollClosed}
-                >
-                  <span className="text-left">{choice.text}</span>
-                  <span className="ml-2">{choice.votes} votes</span>
-                </Button>
+          {poll.choices.map((choice, index) => (
+  <motion.div
+    key={index}
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: index * 0.1 }}
+  >
+    <Button
+      variant={selectedChoice === index ? "secondary" : "outline"}
+      className="w-full justify-between h-auto py-3"
+      onClick={() => {
+        if (!hasVoted && !isPollClosed) {
+          console.log('Setting selected choice:', index) // Debug log
+          setSelectedChoice(index)
+        }
+      }}
+      disabled={hasVoted || isPollClosed}
+    >
+      <span className="text-left">{choice.text}</span>
+      <span className="ml-2">{choice.votes || 0} votes</span>
+    </Button>
                 <div className="relative mt-2">
                   <Progress
                     value={totalVotes > 0 ? (choice.votes / totalVotes) * 100 : 0}
@@ -183,10 +188,13 @@ export default function PollPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
               >
-                <Button onClick={handleVote} disabled={selectedChoice === null || isVoting}>
-                  {isVoting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {isVoting ? 'Submitting...' : 'Submit Vote'}
-                </Button>
+              <Button 
+  onClick={() => handleVote(poll.id, selectedChoice)} 
+  disabled={selectedChoice === null || isVoting}
+>
+  {isVoting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+  {isVoting ? 'Submitting...' : 'Submit Vote'}
+</Button>
               </motion.div>
             )}
             {hasVoted && (

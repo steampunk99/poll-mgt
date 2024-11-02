@@ -22,9 +22,7 @@ const HeroSection = () => {
             <p className="text-xl mb-8">
               Join our community and make your opinion count. Participate in polls, shape decisions, and see real-time results with our cutting-edge voting platform.
             </p>
-            <p className="text-xl mb-8">
-              Join our community and make your opinion count. Participate in polls, shape decisions, and see real-time results with our cutting-edge voting platform.
-            </p>
+           
             <motion.div
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.95 }}
