@@ -122,12 +122,12 @@ export default function PollPage() {
 
   return (
     <div className=" px-4 py-8">
-      <Card className="max-w-2xl">
+      <Card className="max-w-2xl ">
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-2xl font-bold mb-2">{poll.question}</CardTitle>
-              <CardDescription>
+              <CardDescription className="p-4">
                 Deadline: {formatDate(poll.deadline)}
                 <Badge variant={isPollClosed ? "secondary" : "default"} className="ml-2">
                   {isPollClosed ? "Closed" : formatDaysLeft(poll.deadline)}
@@ -137,7 +137,7 @@ export default function PollPage() {
        
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent >
           <div className="space-y-4">
           {poll.choices.map((choice, index) => (
   <motion.div
@@ -160,12 +160,12 @@ export default function PollPage() {
       <span className="text-left">{choice.text}</span>
       <span className="ml-2">{choice.votes || 0} votes</span>
     </Button>
-                <div className="relative mt-2">
+                <div className="relative my-2">
                   <Progress
                     value={totalVotes > 0 ? (choice.votes / totalVotes) * 100 : 0}
                     className="h-2"
                   />
-                  <span className="absolute right-0 top-0 text-xs text-muted-foreground">
+                  <span className="absolute my-2 right-0 top-0 text-xs text-muted-foreground">
                     {totalVotes > 0 ? ((choice.votes / totalVotes) * 100).toFixed(1) : 0}%
                   </span>
                 </div>
