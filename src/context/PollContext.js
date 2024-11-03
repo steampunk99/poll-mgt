@@ -33,14 +33,13 @@ export const PollProvider = ({ children }) => {
 
   // New function to fetch active polls
  const fetchActivePolls = async () => {
-  setLoading(true);
   try {
-    // Query for public polls, ordered by creation date
+    console.log('Fetching active polls...'); // Debug log
     const pollsQuery = query(
       collection(db, 'polls'),
       where('visibility', '==', 'public'),
       orderBy('createdAt', 'desc'),
-      limit(5)
+      limit(6)
     );
     
     const querySnapshot = await getDocs(pollsQuery);
@@ -49,24 +48,14 @@ export const PollProvider = ({ children }) => {
       ...doc.data()
     }));
 
-    console.log('Fetched polls from Firestore:', fetchedPolls); // Debug log
-
-    // Filter active polls
-    const now = new Date();
-    const currentActivePolls = fetchedPolls.filter(poll => {
-      if (!poll.deadline) return true; // Include polls without deadline
-      const deadline = poll.deadline?.toDate();
-      return deadline > now;
-    });
-
-    console.log('Active polls after filtering:', currentActivePolls); // Debug log
-    setActivePolls(currentActivePolls);
-    setError(null);
+    console.log('Fetched active polls:', fetchedPolls); // Debug log
+    setActivePolls(fetchedPolls); // Set the state
+    return fetchedPolls; // Return the polls
+    
   } catch (err) {
     console.error("Error fetching active polls:", err);
     setError('Failed to load active polls.');
-  } finally {
-    setLoading(false);
+    return []; // Return empty array on error
   }
 };
 
@@ -357,6 +346,7 @@ const updatePoll = async (pollId, updatedData) => {
     <PollContext.Provider
       value={{
         polls,
+        activePolls,
         loading,
         error,
         fetchPolls,
