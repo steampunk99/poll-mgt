@@ -45,11 +45,11 @@ const Footer = () => {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Quick Links</h3>
                   <ul className="space-y-2">
-                    <li><Link to="/about" className="text-sm hover:underline flex items-center"><ArrowRight className="h-4 w-4 mr-2" /> About Us</Link></li>
-                    <li><Link to="/polls" className="text-sm hover:underline flex items-center"><ArrowRight className="h-4 w-4 mr-2" /> Active Polls</Link></li>
-                    <li><Link to="/faq" className="text-sm hover:underline flex items-center"><ArrowRight className="h-4 w-4 mr-2" /> FAQ</Link></li>
-                    <li><Link to="/privacy" className="text-sm hover:underline flex items-center"><ArrowRight className="h-4 w-4 mr-2" /> Privacy Policy</Link></li>
-                    <li><Link to="/terms" className="text-sm hover:underline flex items-center"><ArrowRight className="h-4 w-4 mr-2" /> Terms of Service</Link></li>
+                    <li><Link to="/#" className="text-sm hover:underline flex items-center"><ArrowRight className="h-4 w-4 mr-2" /> About Us</Link></li>
+                    <li><Link to="/#" className="text-sm hover:underline flex items-center"><ArrowRight className="h-4 w-4 mr-2" /> Active Polls</Link></li>
+                    <li><Link to="/#" className="text-sm hover:underline flex items-center"><ArrowRight className="h-4 w-4 mr-2" /> FAQ</Link></li>
+                    <li><Link to="/#" className="text-sm hover:underline flex items-center"><ArrowRight className="h-4 w-4 mr-2" /> Privacy Policy</Link></li>
+                    <li><Link to="/#" className="text-sm hover:underline flex items-center"><ArrowRight className="h-4 w-4 mr-2" /> Terms of Service</Link></li>
                   </ul>
                 </div>
 
@@ -77,9 +77,9 @@ const Footer = () => {
                   © {currentYear} PSFU. All rights reserved.
                 </p>
                 <div className="flex space-x-4">
-                  <Link to="/privacy" className="text-sm hover:underline">Privacy Policy</Link>
-                  <Link to="/terms" className="text-sm hover:underline">Terms of Service</Link>
-                  <Link to="/contact" className="text-sm hover:underline">Contact Us</Link>
+                  <Link to="/#" className="text-sm hover:underline">Privacy Policy</Link>
+                  <Link to="/#" className="text-sm hover:underline">Terms of Service</Link>
+                  <Link to="/#" className="text-sm hover:underline">Contact Us</Link>
                 </div>
               </div>
             </div>

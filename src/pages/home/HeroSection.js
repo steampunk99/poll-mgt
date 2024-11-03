@@ -62,7 +62,7 @@ const HeroSection = () => {
             </h1>
             <p className="text-xl text-muted-foreground max-w-xl">
               Participate in real-time polls and make your opinion count. 
-              Join thousands of others in shaping decisions that matter.
+              Join others in shaping decisions that matter.
             </p>
             <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
               <Button asChild size="lg" className="rounded-md bg-foreground">
@@ -71,7 +71,7 @@ const HeroSection = () => {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="rounded-md">
-                <Link to="/polls">Browse Polls</Link>
+                <Link to="dashboard/polls">Browse Polls</Link>
               </Button>
             </div>
 
