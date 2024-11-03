@@ -1,135 +1,209 @@
-import React, { useState, useEffect } from "react";
-import { auth, db } from "../../lib/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
-import { useUser } from "../../context/UserContext";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Select } from "../../components/ui/select";
-import { Alert, AlertDescription } from "../../components/ui/alert";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../../components/ui/card";
+import React, { useEffect, useState } from 'react';
+import { useUser } from '@/context/UserContext';
+import { usePolls } from '@/context/PollContext';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import {
+  User, Mail, Calendar, Vote, BarChart3, Settings,
+  Clock, CheckCircle2, AlertTriangle, Activity
+} from "lucide-react";
+import { format } from 'date-fns';
 
-const UserProfilePage = () => {
-  const { user, setUser, loading } = useUser();
-  const [editMode, setEditMode] = useState(false);
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
-  const navigate = useNavigate();
+export default function VoterProfile() {
+  const { user, updateUserProfile } = useUser();
+  const { polls, getUserPolls } = usePolls();
+  const [userPolls, setUserPolls] = useState([]);
+  const [votingStats, setVotingStats] = useState({
+    totalVotes: 0,
+    activePollsVoted: 0,
+    closedPollsVoted: 0,
+  });
 
   useEffect(() => {
-    if (user) {
-      setName(user.name || "");
-      setRole(user.role || "");
-    }
-  }, [user]);
+    const loadUserVotingData = async () => {
+      if (user?.uid) {
+        try {
+          const votedPolls = await getUserPolls(user.uid);
+          setUserPolls(votedPolls);
 
-  const handleUpdateProfile = async () => {
-    if (!name) {
-      setError("Name cannot be empty.");
-      return;
-    }
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-      await updateDoc(userDocRef, {
-        name: name,
-        role: role,
-      });
-      setUser({ ...user, name, role });
-      setEditMode(false);
-      setSuccess("Profile updated successfully!");
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+          // Calculate voting statistics
+          const stats = {
+            totalVotes: votedPolls.length,
+            activePollsVoted: votedPolls.filter(poll => !poll.closedAt).length,
+            closedPollsVoted: votedPolls.filter(poll => poll.closedAt).length,
+          };
+          setVotingStats(stats);
+        } catch (error) {
+          console.error("Error loading voting data:", error);
+        }
+      }
+    };
 
+    loadUserVotingData();
+  }, [user, getUserPolls]);
 
-
-  if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  const joinDate = user?.metadata?.creationTime 
+    ? format(new Date(user.metadata.creationTime), 'MMMM dd, yyyy')
+    : 'N/A';
 
   return (
-    <div className=" py-8">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">User Profile</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          {success && (
-            <Alert className="mb-4">
-              <AlertDescription>{success}</AlertDescription>
-            </Alert>
-          )}
-          {user ? (
-            <>
-              {!editMode ? (
+    <div className="container max-w-6xl mx-auto px-4 py-8">
+      {/* Profile Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
+        <div className="flex items-center gap-6">
+          <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center">
+            <User className="h-12 w-12 text-primary" />
+          </div>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold">{user?.displayName || 'Voter'}</h1>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Mail className="h-4 w-4" />
+              <span>{user?.email}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="bg-primary/10 text-primary">
+                Voter Account
+              </Badge>
+              <Badge variant="outline" className="text-muted-foreground">
+                Joined {joinDate}
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      <div className="grid gap-6 md:grid-cols-12">
+        {/* Left Column - Stats */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="md:col-span-4 space-y-6"
+        >
+          {/* Voting Statistics */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <Activity className="h-5 w-5 text-primary" />
+                Voting Statistics
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total Votes Cast</span>
+                  <span className="font-medium">{votingStats.totalVotes}</span>
+                </div>
+                <Progress value={(votingStats.totalVotes / Math.max(polls.length, 1)) * 100} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <span className="text-sm text-muted-foreground">Active Polls</span>
+                  <p className="text-2xl font-bold text-primary">
+                    {votingStats.activePollsVoted}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-sm text-muted-foreground">Closed Polls</span>
+                  <p className="text-2xl font-bold">
+                    {votingStats.closedPollsVoted}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Account Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                Account Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-1">
+                <span className="text-sm text-muted-foreground">Email</span>
+                <p className="font-medium">{user?.email}</p>
+              </div>
+              <Separator />
+              <div className="space-y-1">
+                <span className="text-sm text-muted-foreground">Member Since</span>
+                <p className="font-medium">{joinDate}</p>
+              </div>
+              <Separator />
+              <div className="space-y-1">
+                <span className="text-sm text-muted-foreground">Status</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="bg-green-500/10 text-green-500">
+                    Active
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Right Column - Voting History */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="md:col-span-8"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Recent Voting Activity
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {userPolls.length > 0 ? (
                 <div className="space-y-4">
-                  <p><strong>Name:</strong> {user.name}</p>
-                  <p><strong>Email:</strong> {user.email}</p>
-                  <p><strong>Role:</strong> {user.role}</p>
-
-                  {user.role === "admin" && (
-                    <div className="shadow-lg p-4 rounded-md">
-                      <h3 className="font-semibold mb-2">Admin Controls</h3>
-                      <p>As an admin, you can manage polls, users, and more.</p>
+                  {userPolls.map((poll) => (
+                    <div
+                      key={poll.id}
+                      className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                    >
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="space-y-1">
+                          <h3 className="font-medium">{poll.question}</h3>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4" />
+                            <span>
+                              {format(poll.votedAt?.toDate() || new Date(), 'PPp')}
+                            </span>
+                          </div>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className={poll.closedAt ? 'text-muted-foreground' : 'text-primary'}
+                        >
+                          {poll.closedAt ? 'Closed' : 'Active'}
+                        </Badge>
+                      </div>
                     </div>
-                  )}
-
-                  {user.role === "voter" && (
-                    <div className="shadow-lg p-4 rounded-md">
-                      <h3 className="font-semibold mb-2">Voter Dashboard</h3>
-                      <p>As a student, you can participate in polls and view results.</p>
-                    </div>
-                  )}
+                  ))}
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
-                    <Input
-                      id="name"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Enter your name"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
-                    <Select value={role} onValueChange={setRole}>
-                      <option value="student">Student</option>
-                      <option value="admin">Admin</option>
-                    </Select>
-                  </div>
+                <div className="text-center py-8 text-muted-foreground">
+                  <Vote className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>You haven't voted in any polls yet.</p>
                 </div>
               )}
-            </>
-          ) : (
-            <div>No profile data available.</div>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          {!editMode ? (
-            <>
-              <Button onClick={() => setEditMode(true)}>Edit Profile</Button>
-              {/* <Button variant="outline" onClick={handleLogout}>Logout</Button> */}
-            </>
-          ) : (
-            <>
-              <Button onClick={handleUpdateProfile}>Save</Button>
-              <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
-            </>
-          )}
-        </CardFooter>
-      </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
     </div>
   );
-};
-
-export default UserProfilePage;
+}

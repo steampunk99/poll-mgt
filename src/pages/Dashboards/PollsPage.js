@@ -48,15 +48,38 @@ export default function PollsPage() {
     return 'Closed';
   };
 
+  const filteredPolls = useMemo(() => {
+    let filtered = polls.filter(poll => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        poll.question.toLowerCase().includes(searchLower) ||
+        poll.choices.some(choice => 
+          choice.text.toLowerCase().includes(searchLower)
+        )
+      );
+    });
+
+    return filtered.sort((a, b) => {
+      if (sortBy === 'deadline') {
+        const dateA = a.deadline?.toDate() || new Date(0);
+        const dateB = b.deadline?.toDate() || new Date(0);
+        return dateB - dateA;
+      } else if (sortBy === 'votes') {
+        const votesA = calculateTotalVotes(a);
+        const votesB = calculateTotalVotes(b);
+        return votesB - votesA;
+      }
+      return 0;
+    });
+  }, [polls, searchTerm, sortBy]);
+
   const activePolls = useMemo(() => 
-    polls.filter(poll => formatDaysLeft(poll.deadline) !== 'Closed')
-    .sort((a, b) => calculateTotalVotes(b) - calculateTotalVotes(a)),
-  [polls]);
+    filteredPolls.filter(poll => formatDaysLeft(poll.deadline) !== 'Closed'),
+  [filteredPolls]);
 
   const closedPolls = useMemo(() => 
-    polls.filter(poll => formatDaysLeft(poll.deadline) === 'Closed')
-    .sort((a, b) => calculateTotalVotes(b) - calculateTotalVotes(a)),
-  [polls]);
+    filteredPolls.filter(poll => formatDaysLeft(poll.deadline) === 'Closed'),
+  [filteredPolls]);
 
   const PollCard = ({ poll }) => {
     const totalVotes = calculateTotalVotes(poll);
@@ -150,7 +173,7 @@ export default function PollsPage() {
   };
 
   return (
-    <div className="container max-w-5xl mx-4 px-4 py-8">
+    <div className="container max-w-5xl mx-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">Polls</h1>
@@ -191,7 +214,7 @@ export default function PollsPage() {
               />
             </div>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[180px] border-border/50">
+              <SelectTrigger className="w-[180px] border-foreground/20">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
@@ -227,14 +250,22 @@ export default function PollsPage() {
 
         <AnimatePresence mode="wait">
           <TabsContent value="active" className="space-y-6">
-            {activePolls.map(poll => (
-              <PollCard key={poll.id} poll={poll} />
-            ))}
+            {activePolls.length > 0 ? (
+              activePolls.map(poll => <PollCard key={poll.id} poll={poll} />)
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No active polls found{searchTerm && ' matching your search'}</p>
+              </div>
+            )}
           </TabsContent>
           <TabsContent value="closed" className="space-y-6">
-            {closedPolls.map(poll => (
-              <PollCard key={poll.id} poll={poll} />
-            ))}
+            {closedPolls.length > 0 ? (
+              closedPolls.map(poll => <PollCard key={poll.id} poll={poll} />)
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No closed polls found{searchTerm && ' matching your search'}</p>
+              </div>
+            )}
           </TabsContent>
         </AnimatePresence>
       </Tabs>

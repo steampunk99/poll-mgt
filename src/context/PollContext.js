@@ -285,12 +285,19 @@ const updatePoll = async (pollId, updatedData) => {
   // New functionality: Get user's polls
   const getUserPolls = async (userId) => {
     try {
-      const q = query(collection(db, 'polls'), where("createdBy", "==", userId));
+      const q = query(
+        collection(db, 'polls'),
+        where("voters", "array-contains", userId)
+      );
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
     } catch (err) {
       console.error("Error fetching user's polls:", err);
       setError('Failed to fetch user\'s polls.');
+      return [];
     }
   };
 
