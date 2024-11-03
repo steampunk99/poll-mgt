@@ -1,244 +1,197 @@
-import React, { useEffect, useState, useMemo } from 'react'
-import { usePolls } from '@/context/PollContext'
-import { useUser } from '@/context/UserContext'
-import { useNavigate,Link } from 'react-router-dom'
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Loader2, Vote, Calendar, Users, ChevronDown, ChevronUp, Search, PlusCircle, RefreshCw } from "lucide-react"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import { Progress } from "@/components/ui/progress"
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Input } from "@/components/ui/input"
+import React, { useEffect, useState, useMemo } from 'react';
+import { usePolls } from '@/context/PollContext';
+import { useUser } from '@/context/UserContext';
+import { useNavigate, Link } from 'react-router-dom';
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Loader2, Calendar, Users2, ChevronDown, ChevronUp, 
+  Search, PlusCircle, RefreshCw, BarChart3, Clock 
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { toast } from "@/hooks/use-toast"
+} from "@/components/ui/select";
 
 export default function PollsPage() {
-  const { polls, fetchPolls, votePoll, searchPolls, createPoll, loading: contextLoading, error } = usePolls()
-  const { user } = useUser()
-  const [localPolls, setLocalPolls] = useState([])
-  const [poll, setPoll] = useState(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [sortBy, setSortBy] = useState('deadline')
-  const [expandedPolls, setExpandedPolls] = useState({})
-  const [selectedTab, setSelectedTab] = useState('active')
-  const [loading, setLoading] = useState()
-  const navigate = useNavigate()
+  const { polls, fetchPolls, loading: contextLoading } = usePolls();
+  const { user } = useUser();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('deadline');
+  const [selectedTab, setSelectedTab] = useState('active');
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const loadPolls = async () => {
-      await fetchPolls()
-      setLoading(false)
-    }
-    loadPolls()
-  }, [fetchPolls])
+  const isAdmin = user?.role === 'admin';
+
+  const calculateTotalVotes = (poll) => {
+    if (!poll?.choices) return 0;
+    return poll.choices.reduce((sum, choice) => sum + (choice.votes || 0), 0);
+  };
 
   const formatDaysLeft = (timestamp) => {
-    if (!timestamp) return 'N/A'
-    const endDate = timestamp.toDate()
-    const today = new Date()
-    const timeDiff = endDate - today
-    const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
-    return daysLeft > 0 ? `${daysLeft} day(s) left` : 'Closed'
-  }
+    if (!timestamp) return 'No deadline';
+    const endDate = timestamp.toDate();
+    const today = new Date();
+    const timeDiff = endDate - today;
+    const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+    
+    if (daysLeft > 30) return `${Math.floor(daysLeft / 30)}mo left`;
+    if (daysLeft > 0) return `${daysLeft}d left`;
+    return 'Closed';
+  };
 
-  const handleSearch = async () => {
-    if (searchTerm.trim() === '') {
-      setLocalPolls(polls)
-    } else {
-      const filteredPolls = polls.filter(poll => 
-        poll.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        poll.description.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      setLocalPolls(filteredPolls)
-    }
-  }
+  const activePolls = useMemo(() => 
+    polls.filter(poll => formatDaysLeft(poll.deadline) !== 'Closed')
+    .sort((a, b) => calculateTotalVotes(b) - calculateTotalVotes(a)),
+  [polls]);
 
-  const handleRefresh = async () => {
-    await fetchPolls()
-    toast({
-      title: "Polls Refreshed",
-      description: "The poll list has been updated.",
-      variant: "default",
-    })
-  }
+  const closedPolls = useMemo(() => 
+    polls.filter(poll => formatDaysLeft(poll.deadline) === 'Closed')
+    .sort((a, b) => calculateTotalVotes(b) - calculateTotalVotes(a)),
+  [polls]);
 
+  const PollCard = ({ poll }) => {
+    const totalVotes = calculateTotalVotes(poll);
+    const hasVoted = poll.voters?.some(voter => voter.userId === user?.uid);
+    const userVote = poll.voters?.find(voter => voter.userId === user?.uid);
 
-  const sortedPolls = useMemo(() => {
-    return [...localPolls].sort((a, b) => {
-      if (sortBy === 'deadline') {
-        return (a.deadline?.toDate() || 0) - (b.deadline?.toDate() || 0)
-      } else if (sortBy === 'votes') {
-        return (b.totalVotes || 0) - (a.totalVotes || 0)
-      }
-      return 0
-    })
-  }, [localPolls, sortBy])
-
-  
-
-  const activePolls = polls.filter(poll => formatDaysLeft(poll.deadline) !== 'Closed')
-  const closedPolls = polls.filter(poll => formatDaysLeft(poll.deadline) === 'Closed')
-
-  
-
-
-  const getStatusBadge = (deadline) => {
-    const daysLeft = formatDaysLeft(deadline)
-    if (daysLeft === 'Closed') {
-      return <Badge variant="secondary">Closed</Badge>
-    } else if (parseInt(daysLeft) <= 3) {
-      return <Badge variant="destructive">Ending Soon</Badge>
-    } else {
-      return <Badge variant="default">Active</Badge>
-    }
-  }
-
-  const toggleExpanded = (pollId) => {
-    setExpandedPolls(prev => ({ ...prev, [pollId]: !prev[pollId] }))
-  }
-
-  const handleCreatePoll = () => {
-    navigate('/dashboard/create-poll')
-  }
-
-
-  const PollTable = ({ polls, showVoteButton }) => (
-    <Card>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[300px]">Question</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Total Votes</TableHead>
-            <TableHead className="text-right">Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {polls.map(poll => (
-            <React.Fragment key={poll.id}>
-              <TableRow className="group">
-                <TableCell className="font-medium">
-                  <Collapsible open={expandedPolls[poll.id]} onOpenChange={() => toggleExpanded(poll.id)}>
-                    <CollapsibleTrigger className="flex items-center gap-2 hover:underline">
-                      {poll.question}
-                      {expandedPolls[poll.id] ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </CollapsibleTrigger>
-                  </Collapsible>
-                </TableCell>
-                <TableCell>{getStatusBadge(poll.deadline)}</TableCell>
-                <TableCell>{poll.totalVotes || 0}</TableCell>
-                <TableCell className="text-right">
-                  
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="w-full"
+      >
+        <Card className="group hover:shadow-lg transition-all duration-300 border-border/50 bg-gradient-to-b from-card/50 to-card">
+          <CardHeader className="pb-4">
+            <div className="flex justify-between items-start gap-4">
+              <div className="space-y-1 flex-1">
                 <Link to={`/dashboard/poll/${poll.id}`}>
-                    <Button onClick={() => toggleExpanded(poll.id)} size="sm">
-                      Open Poll
-                    </Button>
-                  </Link>
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell colSpan={4} className="p-0">
-                  <Collapsible open={expandedPolls[poll.id]}>
-                    <CollapsibleContent className="p-4 bg-muted/50">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {formatDaysLeft(poll.deadline)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Users className="h-4 w-4" />
-                          {poll.totalVotes || 0} votes
-                        </span>
-                      </div>
-                      <p className="text-sm mb-4">{poll.description || "No description provided."}</p>
-                      {poll.choices && (
-                        <div className="space-y-2">
-                          {poll.choices.map((choice, index) => (
-                            <div key={index} className="space-y-1">
-                              <div className="flex justify-between text-sm">
-                                <span>{choice.text}</span>
-                                <span>{choice.votes} votes</span>
-                              </div>
-                              <Progress value={(choice.votes / (poll.totalVotes || 1)) * 100} className="h-2" />
-                              
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </CollapsibleContent>
-                  </Collapsible>
-                </TableCell>
-              </TableRow>
-            </React.Fragment>
-          ))}
-        </TableBody>
-      </Table>
-    </Card>
-  )
+                  <CardTitle className="text-xl hover:text-primary transition-colors">
+                    {poll.question}
+                  </CardTitle>
+                </Link>
+                <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="h-4 w-4 text-primary" />
+                    {formatDaysLeft(poll.deadline)}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Users2 className="h-4 w-4 text-primary" />
+                    {totalVotes} votes
+                  </span>
+                  {hasVoted && (
+                    <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                      You voted
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {poll.choices.map((choice, index) => {
+                const votes = choice.votes || 0;
+                const percentage = totalVotes > 0 ? (votes / totalVotes) * 100 : 0;
+                const isUserVote = userVote?.choiceId === choice.id;
 
-  // if (loading || contextLoading) {
-  //   return (
-  //     <div className="flex justify-center items-center h-screen">
-  //       <Loader2 className="h-8 w-8 animate-spin" />
-  //     </div>
-  //   )
-  // }
+                return (
+                  <div key={index} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 flex-1">
+                        <span className="font-medium">{choice.text}</span>
+                        {isUserVote && (
+                          <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5">
+                            Your vote
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-muted-foreground min-w-[4rem] text-right">
+                        {percentage.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <Progress 
+                        value={percentage} 
+                        className={`h-2 ${isUserVote ? 'bg-primary' : 'bg-muted'}`}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                asChild
+                className="hover:bg-primary/5 hover:text-primary"
+              >
+                <Link to={`/dashboard/poll/${poll.id}`}>
+                  View Details
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Polls</h1>
-        <div className="flex gap-2">
-          {/* <Button onClick={handleCreatePoll}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create Poll
-          </Button> */}
-          <Button variant="outline" onClick={handleRefresh}>
+    <div className="container max-w-5xl mx-4 px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">Polls</h1>
+          <p className="text-muted-foreground">
+            View and participate in active polls
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            onClick={() => fetchPolls()}
+            className="hover:bg-primary/5 hover:text-primary"
+          >
             <RefreshCw className="mr-2 h-4 w-4" />
-          
             Refresh
           </Button>
+          {isAdmin && (
+            <Button 
+              onClick={() => navigate('/dashboard/create-poll')}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create Poll
+            </Button>
+          )}
         </div>
       </div>
-      
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Search and Filter</CardTitle>
-        </CardHeader>
-        <CardContent>
+
+      <Card className="mb-8 border-foreground/20">
+        <CardContent className="pt-6">
           <div className="flex gap-4">
             <div className="flex-1">
               <Input
                 placeholder="Search polls..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full border-foreground/20 focus:ring-primary/20"
               />
             </div>
-            <Button onClick={handleSearch}>
-              <Search className="mr-2 h-4 w-4" />
-              Search
-            </Button>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] border-border/50">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
@@ -249,31 +202,42 @@ export default function PollsPage() {
           </div>
         </CardContent>
       </Card>
-      
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="active">Active Polls</TabsTrigger>
-          <TabsTrigger value="closed">Closed Polls</TabsTrigger>
+
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+          <TabsTrigger 
+            value="active" 
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            Active Polls
+            <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary">
+              {activePolls.length}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="closed"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            Closed Polls
+            <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary">
+              {closedPolls.length}
+            </Badge>
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="active">
-          {activePolls.length > 0 ? (
-            <PollTable polls={activePolls} showVoteButton={true} />
-          ) : (
-            <Card className="p-6">
-              <p className="text-center text-muted-foreground">No active polls available at the moment.</p>
-            </Card>
-          )}
-        </TabsContent>
-        <TabsContent value="closed">
-          {closedPolls.length > 0 ? (
-            <PollTable polls={closedPolls} showVoteButton={false} />
-          ) : (
-            <Card className="p-6">
-              <p className="text-center text-muted-foreground">No closed polls available.</p>
-            </Card>
-          )}
-        </TabsContent>
+
+        <AnimatePresence mode="wait">
+          <TabsContent value="active" className="space-y-6">
+            {activePolls.map(poll => (
+              <PollCard key={poll.id} poll={poll} />
+            ))}
+          </TabsContent>
+          <TabsContent value="closed" className="space-y-6">
+            {closedPolls.map(poll => (
+              <PollCard key={poll.id} poll={poll} />
+            ))}
+          </TabsContent>
+        </AnimatePresence>
       </Tabs>
     </div>
-  )
+  );
 }
