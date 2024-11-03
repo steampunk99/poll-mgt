@@ -1,154 +1,162 @@
-import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { loginWithEmail, loginWithGoogle, loginWithApple } from '../auth/auth'
-import { Link } from 'react-router-dom'
-import { FaGoogle, FaApple } from 'react-icons/fa'
-import loginBG from '../assets/login.png'
-import { useUser } from '@/context/UserContext'
-import { auth, db } from "@/lib/firebase"
-import { doc, getDoc, getDocs,addDoc ,collection, updateDoc, setDoc, deleteDoc } from "firebase/firestore"
-import { Loader2 } from 'lucide-react'
+import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { loginWithEmail, loginWithGoogle, loginWithApple } from '../auth/auth';
+import { Link } from 'react-router-dom';
+import { FaGoogle, FaApple } from 'react-icons/fa';
+import { Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useUser } from '@/context/UserContext';
+import { Separator } from "@/components/ui/separator";
 import Header from '@/components/Header'
 
 export default function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const {user} = useUser()
-
-
-  // audit logs
-    // audit log
-    const logUserAction = async (userId, action, details = {}) => {
-      try {
-        await addDoc(collection(db, 'auditLogs'), {
-          userId,
-          action,
-          timestamp: new Date(),
-          details
-        });
-      } catch (err) {
-        console.error("Error logging user action:", err);
-      }
-    };
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useUser();
 
   const handleLogin = async (e) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-    setSuccess(false)
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    
     try {
-      await loginWithEmail(email, password)
-      await logUserAction(user?.uid, 'login user', { email });
-      setSuccess(true)
+      await signIn(email, password);
     } catch (err) {
-      setError(err.message)
-      setLoading(false)
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-  }
-
-  const handleGoogleLogin = async () => {
-    setError(null)
-    setSuccess(false)
-    setLoading(true)
-    try {
-      await loginWithGoogle()
-      await logUserAction(user?.uid, 'login user', { email });
-      setSuccess(true)
-    } catch (err) {
-      setError(err.message)
-      setLoading(false)
-    }
-  }
-
-  const handleAppleLogin = async () => {
-    setError(null)
-    setSuccess(false)
-    try {
-      await loginWithApple()
-      setSuccess(true)
-    } catch (err) {
-      setError(err.message)
-    }
-  }
+  };
 
   return (
-    <div className="flex min-h-screen bg-card/40 dark:bg-card-50">
-      <Header className="mb-6" />
-      <div className="relative hidden min-h-screen w-full  lg:block lg:w-1/2  items-center justify-center">
+    <div className="min-h-screen flex">
+      <Header />  
+      {/* Left side - Image */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-black">
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-black/20 z-10" />
         <img 
-          src={loginBG}
-          alt="Login illustration" 
-          className=" rounded-lg absolute w-full h-screen object-cover" 
-          
+          src="https://images.unsplash.com/photo-1573152958734-1922c188fba3?q=80&w=2832&auto=format&fit=crop"
+          alt="Login background" 
+          className="object-cover w-full h-full opacity-90"
         />
-      </div>
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-6 bg-card/50  border rounded-lg text-card-foreground p-10 shadow-md">
-          <h2 className="text-3xl font-bold text-center">LOGIN</h2>
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          {success && (
-            <Alert>
-              <AlertDescription>Login successful!</AlertDescription>
-            </Alert>
-          )}
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="Enter your email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                placeholder="Enter your password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required 
-              />
-            </div>
-            <Button type="submit" className="w-full">
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-               LOGIN
-               
-               </Button>
-            
-          </form>
-          <div className="flex flex-col space-y-4">
-            <Button onClick={handleGoogleLogin} variant="outline" className="w-full">
-              <FaGoogle className="mr-2" /> Login with Google
-            </Button>
-            <Button onClick={handleAppleLogin} variant="outline" className="w-full">
-              <FaApple className="mr-2" /> Login with Apple
-            </Button>
-          </div>
-          <div className="flex justify-between text-sm">
-            <Link to="/forgot-password" className="text-primary hover:underline">
-              Forgot password?
-            </Link>
-            <Link to="/register" className="text-primary hover:underline">
-              Register  now
-            </Link>
+        <div className="absolute inset-0 flex items-center justify-center z-20">
+          <div className="text-center text-white p-8 max-w-md">
+            <h2 className="text-3xl font-bold mb-4">Shape the Future</h2>
+            <p className="text-gray-200">
+              Join our community and make your voice heard. Every vote counts in creating meaningful change.
+            </p>
           </div>
         </div>
       </div>
+
+      {/* Right side - Login form */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-background">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-[400px]"
+        >
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold">Welcome Back</h1>
+            <p className="text-sm text-muted-foreground mt-2">
+              Sign in to your account to continue
+            </p>
+          </div>
+
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-6">
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-11"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Link 
+                    to="/forgot-password" 
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-11"
+                  required
+                />
+              </div>
+
+              <Button type="submit" className="w-full h-11" disabled={loading}>
+                {loading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : "Sign in"}
+              </Button>
+            </form>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  or continue with
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Button 
+                variant="outline" 
+                onClick={loginWithGoogle}
+                className="h-11"
+              >
+                <FaGoogle className="mr-2 h-4 w-4" />
+                Google
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={loginWithApple}
+                className="h-11"
+              >
+                <FaApple className="mr-2 h-4 w-4" />
+                Apple
+              </Button>
+            </div>
+          </div>
+
+          <p className="text-sm text-muted-foreground text-center mt-8">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-primary hover:underline font-medium">
+              Create one now
+            </Link>
+          </p>
+        </motion.div>
+      </div>
     </div>
-  )
+  );
 }

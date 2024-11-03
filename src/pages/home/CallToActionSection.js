@@ -9,10 +9,8 @@ const CallToActionSection = () => {
     <section className="py-20 px-4 md:px-0">
       <div className="container mx-auto">
         <motion.div 
-          className="bg-foreground text-primary-foreground rounded-lg p-12 text-center"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
+          className="bg-primary text-primary-foreground rounded-lg p-12 text-center"
+         
         >
           <h2 className="text-3xl font-bold mb-4">Ready to Make Your Voice Heard?</h2>
           
