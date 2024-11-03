@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/table";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { motion } from 'framer-motion';
 
 export default function VotingHistory() {
   const { polls, fetchPolls, deletePoll, closePoll, getPollResults, getUserPolls } = usePolls();
@@ -76,100 +78,101 @@ export default function VotingHistory() {
 
   const renderPollCard = (poll) => {
     const totalVotes = calculateTotalVotes(poll.id);
-
-      // Get the user's vote for this specific poll
-      const userPoll = userPolls?.find(p => p.id === poll.id);
-      console.log('User vote for poll:', poll.id, userPoll?.userVote); // Debug log
-       // Debug log
-
-
-    return (
-      <Card key={poll.id} className={poll.status === 'closed' ? 'opacity-75' : ''}>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle>{poll.question}</CardTitle>
-              <CardDescription>
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    {poll.status === 'closed' ? 'Closed on' : 'Ends on'} {formatDate(poll.deadline)}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    {totalVotes} total votes
-                  </span>
-                  {poll.status === 'closed' && (
-                    <Badge variant="secondary">
-                      <Lock className="h-4 w-4 mr-1" />
-                      Closed
-                    </Badge>
-                  )}
-                </div>
-              </CardDescription>
-            </div>
-            {isAdmin && (
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleClosePoll(poll.id)}
-                  disabled={poll.status === 'closed'}
-                >
-                  <Lock className="h-4 w-4 mr-1" />
-                  Close Poll
-                </Button>
-            
-              </div>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-        <Table>
-  <TableHeader>
-    <TableRow>
-      <TableHead>Choice</TableHead>
-      <TableHead>Votes</TableHead>
-      {/* <TableHead>Percentage</TableHead> */}
-      {!isAdmin && <TableHead>Your Vote</TableHead>}
-    </TableRow>
-  </TableHeader>
-  <TableBody>
-  {poll.choices.map((choice, index) => {
-    const votes = choice.votes || 0;
-    const totalVotes = poll.choices.reduce((sum, c) => sum + (c.votes || 0), 0);
     
-
+    // Find user's vote in the voters array
+    const userVote = poll.voters?.find(voter => voter.userId === user.uid);
+    const userChoice = poll.choices?.find(choice => choice.id === userVote?.choiceId);
 
     return (
-      <TableRow key={index}>
-        <TableCell>{choice.text}</TableCell>
-        <TableCell>{votes}</TableCell>
-        {!isAdmin && (
-          <TableCell>
-            {userPoll?.userVote === choice.text && (
-              <Badge variant="secondary">
-                <CheckCircle2 className="h-4 w-4 mr-1" />
-                Your Vote
-              </Badge>
-            )}
-          </TableCell>
-        )}
-      </TableRow>
-    );
-  })}
-</TableBody>
-</Table>
-
-        </CardContent>
-        {isAdmin && (
-          <CardFooter>
-            <div className="text-sm text-muted-foreground">
-              Poll ID: {poll.id} • Created by: {poll.createdBy}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="w-full"
+        key={poll.id}
+      >
+        <Card className={`overflow-hidden transition-all duration-200 ${poll.status === 'closed' ? 'bg-muted/50' : 'hover:shadow-md'}`}>
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle>{poll.question}</CardTitle>
+                <CardDescription>
+                  <div className="flex items-center gap-4 text-sm">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {poll.status === 'closed' ? 'Closed on' : 'Ends on'} {formatDate(poll.deadline)}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      {totalVotes} total votes
+                    </span>
+                    {poll.status === 'closed' && (
+                      <Badge variant="secondary">
+                        <Lock className="h-4 w-4 mr-1" />
+                        Closed
+                      </Badge>
+                    )}
+                  </div>
+                </CardDescription>
+              </div>
+              {isAdmin && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleClosePoll(poll.id)}
+                    disabled={poll.status === 'closed'}
+                  >
+                    <Lock className="h-4 w-4 mr-1" />
+                    Close Poll
+                  </Button>
+              
+                </div>
+              )}
             </div>
-          </CardFooter>
-        )}
-      </Card>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-3">
+              {poll.choices.map((choice, index) => {
+                const votes = choice.votes || 0;
+                const percentage = totalVotes > 0 ? (votes / totalVotes) * 100 : 0;
+                const isUserVote = userVote?.choiceId === choice.id; // Updated check for user's vote
+
+                return (
+                  <div key={index} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <span>{choice.text}</span>
+                        {isUserVote && (
+                          <Badge variant="secondary" className="bg-primary/10 text-primary">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Your Vote
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-muted-foreground">{votes} votes</span>
+                    </div>
+                    <div className="relative">
+                      <Progress 
+                        value={percentage} 
+                        className={`h-2 ${isUserVote ? 'bg-primary/15' : ''}`}
+                      />
+                     
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+          {isAdmin && (
+            <CardFooter>
+              <div className="text-sm text-muted-foreground">
+                Poll ID: {poll.id} • Created by: {poll.createdBy}
+              </div>
+            </CardFooter>
+          )}
+        </Card>
+      </motion.div>
     );
   };
 
