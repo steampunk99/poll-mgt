@@ -75,7 +75,7 @@ const HeroSection = () => {
             transition={{ delay: 0.2 }}
             className="flex gap-4 justify-center"
           >
-            <Button asChild size="lg">
+            <Button asChild size="lg" className="bg-foreground">
               <Link to="/register">Create Account <ArrowRight className="ml-2 h-5 w-5" /></Link>
             </Button>
             <Button asChild variant="outline" size="lg">
