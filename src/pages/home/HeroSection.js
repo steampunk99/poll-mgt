@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { usePolls } from '@/context/PollContext';
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Activity, Clock, Users2, Loader2 } from 'lucide-react';
-
+import CountdownTimer from './CountdownTimer';
 const HeroSection = () => {
   const { activePolls, fetchActivePolls } = usePolls();
 
@@ -19,11 +19,13 @@ const HeroSection = () => {
   const timeUntil = (deadline) => {
     try {
       if (!deadline) return 'No deadline';
-      if (!deadline.toDate) return 'Invalid deadline';
+      const date = deadline.toDate ? deadline.toDate() : new Date(deadline);
       
       const now = new Date();
-      const end = deadline.toDate();
-      const diff = end - now;
+      const diff = date - now;
+      
+      // Return null for expired polls
+      if (diff <= 0) return null;
       
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -40,6 +42,14 @@ const HeroSection = () => {
       return 'Time unavailable';
     }
   };
+
+  // Filter active polls and limit to 3
+  const displayedPolls = activePolls
+    ?.filter(poll => {
+      const deadline = poll.deadline?.toDate ? poll.deadline.toDate() : new Date(poll.deadline);
+      return deadline > new Date();
+    })
+    .slice(0, 3);
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -112,7 +122,7 @@ const HeroSection = () => {
             </div>
             
             <div className="space-y-4 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
-              {activePolls?.map((poll) => (
+              {displayedPolls?.map((poll) => (
                 <motion.div
                   key={poll.id}
                   whileHover={{ scale: 1.02 }}
@@ -128,8 +138,7 @@ const HeroSection = () => {
                             {poll.choices?.reduce((sum, choice) => sum + (choice.votes || 0), 0) || 0} votes
                           </span>
                           <span className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            {timeUntil(poll.deadline)}
+                          <CountdownTimer deadline={poll.deadline} /> left
                           </span>
                         </div>
                       </CardContent>
