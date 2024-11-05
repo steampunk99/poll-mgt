@@ -188,7 +188,7 @@ export default function VotingHistory() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">
-          {isAdmin ? "Poll Management" : "Your Voting History"}
+          {isAdmin ? "Poll Results" : "Your Voting History"}
         </h1>
         {isAdmin && (
           <Badge variant="secondary" className="text-sm">
