@@ -36,15 +36,17 @@ export default function PollPage() {
     setLoading(false)
   }, [pollId, polls, user])
 
-  const formatDate = (timestamp) => {
-    if (!timestamp) return 'N/A'
-    const date = timestamp.toDate()
+  const formatDate = (deadline) => {
+    if (!deadline) return 'N/A'
+    // Handle both Firestore timestamp and string date
+    const date = deadline.toDate ? deadline.toDate() : new Date(deadline)
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
   }
-
-  const formatDaysLeft = (timestamp) => {
-    if (!timestamp) return 'N/A'
-    const endDate = timestamp.toDate()
+  
+  const formatDaysLeft = (deadline) => {
+    if (!deadline) return 'N/A'
+    // Handle both Firestore timestamp and string date
+    const endDate = deadline.toDate ? deadline.toDate() : new Date(deadline)
     const today = new Date()
     const timeDiff = endDate - today
     const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
@@ -140,7 +142,7 @@ const handleVote = async (pollId, choiceIndex) => {
   }
 
   const totalVotes = poll.choices.reduce((sum, choice) => sum + choice.votes, 0)
-  const isPollClosed = new Date(poll.deadline.toDate()) < new Date()
+  const isPollClosed = new Date(poll.deadline.toDate ? poll.deadline.toDate() : poll.deadline) < new Date()
 
   return (
     <div className=" px-4 py-8">
