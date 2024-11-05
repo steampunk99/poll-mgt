@@ -4,13 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { loginWithEmail, loginWithGoogle, loginWithApple } from '../auth/auth';
-import { Link } from 'react-router-dom';
+import { Link,useNavigate } from 'react-router-dom';
 import { FaGoogle, FaApple } from 'react-icons/fa';
 import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useUser } from '@/context/UserContext';
 import { Separator } from "@/components/ui/separator";
-import Header from '@/components/Header'
+import Header from '@/components/Header';
+import { ToastContainer } from 'react-toastify'; // Import ToastContainer
+import 'react-toastify/dist/ReactToastify.css'; // Import React-Toastify CSS
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -18,6 +20,7 @@ export default function Login() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const { signIn } = useUser();
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -26,6 +29,7 @@ export default function Login() {
     
     try {
       await signIn(email, password);
+      // The toast notifications are handled within auth.js
     } catch (err) {
       setError(err.message);
     } finally {
@@ -132,7 +136,7 @@ export default function Login() {
             <div className="grid grid-cols-2 gap-3">
               <Button 
                 variant="outline" 
-                onClick={loginWithGoogle}
+                onClick={() => loginWithGoogle(navigate)}
                 className="h-11"
               >
                 <FaGoogle className="mr-2 h-4 w-4" />
@@ -140,7 +144,7 @@ export default function Login() {
               </Button>
               <Button 
                 variant="outline" 
-                onClick={loginWithApple}
+                onClick={() => loginWithApple(navigate)}
                 className="h-11"
               >
                 <FaApple className="mr-2 h-4 w-4" />
@@ -156,6 +160,7 @@ export default function Login() {
             </Link>
           </p>
         </motion.div>
+        <ToastContainer /> {/* Add ToastContainer */}
       </div>
     </div>
   );

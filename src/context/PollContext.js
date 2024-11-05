@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '../lib/firebase'; // Import Firestore instance
-import { serverTimestamp, collection,arrayUnion,getDoc,where,query,orderBy,limit, getDocs, addDoc, deleteDoc, updateDoc, doc } from 'firebase/firestore';
+import { serverTimestamp, collection,arrayUnion,getDoc,where,query,orderBy,limit, getDocs, addDoc, deleteDoc, updateDoc, doc, Timestamp } from 'firebase/firestore';
 import { useUser } from './UserContext';
 
 
@@ -81,12 +81,31 @@ export const PollProvider = ({ children }) => {
   // Add a new poll
   const createPoll = async (pollData) => {
     try {
-      await addDoc(collection(db, 'polls'), pollData);
-      fetchPolls();
+      // Ensure deadline is a Firestore Timestamp
+      let deadline;
+      if (pollData.deadline instanceof Date) {
+        deadline = Timestamp.fromDate(pollData.deadline);
+      } else if (typeof pollData.deadline === 'string') {
+        deadline = Timestamp.fromDate(new Date(pollData.deadline));
+      } else if (pollData.deadline instanceof Timestamp) {
+        deadline = pollData.deadline;
+      } else {
+        throw new Error('Invalid deadline format');
+      }
+
+      const pollWithTimestamp = {
+        ...pollData,
+        deadline,
+        createdAt: serverTimestamp(),
+      };
+
+      await addDoc(collection(db, 'polls'), pollWithTimestamp);
+      await fetchPolls();
       await logAudit(user?.uid, 'create_poll', { pollData });
     } catch (err) {
       console.error("Error creating poll:", err);
       setError('Failed to create poll.');
+      throw err;
     }
   };
 

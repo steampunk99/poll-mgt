@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Timestamp } from 'firebase/firestore';
 
 export default function PollsPage() {
   const { polls, fetchPolls, loading: contextLoading } = usePolls();
@@ -32,53 +33,109 @@ export default function PollsPage() {
   const isAdmin = user?.role === 'admin';
 
   const calculateTotalVotes = (poll) => {
-    if (!poll?.choices) return 0;
-    return poll.choices.reduce((sum, choice) => sum + (choice.votes || 0), 0);
+    try {
+      if (!poll?.choices) return 0;
+      return poll.choices.reduce((sum, choice) => sum + (choice.votes || 0), 0);
+    } catch (error) {
+      console.error('Error calculating votes:', error);
+      return 0;
+    }
   };
 
   const formatDaysLeft = (timestamp) => {
-    if (!timestamp) return 'No deadline';
-    const endDate = timestamp.toDate();
-    const today = new Date();
-    const timeDiff = endDate - today;
-    const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-    
-    if (daysLeft > 30) return `${Math.floor(daysLeft / 30)}mo left`;
-    if (daysLeft > 0) return `${daysLeft}d left`;
-    return 'Closed';
+    try {
+      if (!timestamp) return 'No deadline';
+      
+      let endDate;
+      // Check if it's a Firestore Timestamp
+      if (timestamp instanceof Timestamp) {
+        endDate = timestamp.toDate();
+      } 
+      // Check if it has toDate method (another way to check for Firestore Timestamp)
+      else if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+        endDate = timestamp.toDate();
+      }
+      // Handle regular Date object or timestamp
+      else {
+        endDate = new Date(timestamp);
+      }
+
+      const today = new Date();
+      const timeDiff = endDate - today;
+      const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+      
+      if (daysLeft < 0) return 'Closed';
+      if (daysLeft > 30) return `${Math.floor(daysLeft / 30)}mo left`;
+      if (daysLeft > 0) return `${daysLeft}d left`;
+      return 'Closing today';
+    } catch (error) {
+      console.error('Error formatting deadline:', error, timestamp);
+      return 'Invalid deadline';
+    }
   };
 
   const filteredPolls = useMemo(() => {
-    let filtered = polls.filter(poll => {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        poll.question.toLowerCase().includes(searchLower) ||
-        poll.choices.some(choice => 
-          choice.text.toLowerCase().includes(searchLower)
-        )
-      );
-    });
+    try {
+      let filtered = polls.filter(poll => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          poll.question.toLowerCase().includes(searchLower) ||
+          poll.choices.some(choice => 
+            choice.text.toLowerCase().includes(searchLower)
+          )
+        );
+      });
 
-    return filtered.sort((a, b) => {
-      if (sortBy === 'deadline') {
-        const dateA = a.deadline?.toDate() || new Date(0);
-        const dateB = b.deadline?.toDate() || new Date(0);
-        return dateB - dateA;
-      } else if (sortBy === 'votes') {
-        const votesA = calculateTotalVotes(a);
-        const votesB = calculateTotalVotes(b);
-        return votesB - votesA;
-      }
-      return 0;
-    });
+      return filtered.sort((a, b) => {
+        if (sortBy === 'deadline') {
+          let dateA, dateB;
+          
+          try {
+            dateA = a.deadline?.toDate?.() || new Date(a.deadline || 0);
+          } catch (error) {
+            dateA = new Date(0);
+          }
+          
+          try {
+            dateB = b.deadline?.toDate?.() || new Date(b.deadline || 0);
+          } catch (error) {
+            dateB = new Date(0);
+          }
+
+          return dateB - dateA;
+        } else if (sortBy === 'votes') {
+          const votesA = calculateTotalVotes(a);
+          const votesB = calculateTotalVotes(b);
+          return votesB - votesA;
+        }
+        return 0;
+      });
+    } catch (error) {
+      console.error('Error filtering polls:', error);
+      return [];
+    }
   }, [polls, searchTerm, sortBy]);
 
   const activePolls = useMemo(() => 
-    filteredPolls.filter(poll => formatDaysLeft(poll.deadline) !== 'Closed'),
+    filteredPolls.filter(poll => {
+      try {
+        return formatDaysLeft(poll.deadline) !== 'Closed';
+      } catch (error) {
+        console.error('Error filtering active polls:', error);
+        return false;
+      }
+    }),
   [filteredPolls]);
 
   const closedPolls = useMemo(() => 
-    filteredPolls.filter(poll => formatDaysLeft(poll.deadline) === 'Closed'),
+    filteredPolls.filter(poll => {
+      try {
+        return formatDaysLeft(poll.deadline) === 'Closed';
+      } catch (error) {
+        console.error('Error filtering closed polls:', error);
+        return false;
+      }
+    }),
   [filteredPolls]);
 
   const PollCard = ({ poll }) => {

@@ -92,7 +92,7 @@ const MainRoutes = () => {
         <Route path="admin" element={<PrivateRoute requiredRole="admin"><AdminDashboard /></PrivateRoute>} />
         <Route path="manage-users" element={<PrivateRoute requiredRole="admin"><UserManagement /></PrivateRoute>} />
         <Route path="manage-roles" element={<PrivateRoute requiredRole="admin"><RoleManagement /></PrivateRoute>} />
-        <Route path="voter" element={<PrivateRoute requiredRole="voter"><VoterDashboard /></PrivateRoute>} />
+        <Route path="voter" element={<PrivateRoute requiredRole="voter"><PollsPage /></PrivateRoute>} />
         <Route path="profile" element={<UserProfilePage />} />
         <Route path="poll/:pollId" element={<PollPage />} />
         <Route path="polls" element={<PollsPage />} />
