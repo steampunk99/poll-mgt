@@ -17,21 +17,28 @@ const HeroSection = () => {
   }, []);
 
   const timeUntil = (deadline) => {
-    if (!deadline) return 'No deadline';
-    const now = new Date();
-    const end = deadline.toDate();
-    const diff = end - now;
-    
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (hours > 24) {
-      const days = Math.floor(hours / 24);
-      return `${days} days left`;
+    try {
+      if (!deadline) return 'No deadline';
+      if (!deadline.toDate) return 'Invalid deadline';
+      
+      const now = new Date();
+      const end = deadline.toDate();
+      const diff = end - now;
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (hours > 24) {
+        const days = Math.floor(hours / 24);
+        return `${days} days left`;
+      }
+      if (hours > 0) return `${hours}h ${minutes}m left`;
+      if (minutes > 0) return `${minutes}m left`;
+      return 'Ending soon';
+    } catch (error) {
+      console.error('Error calculating time:', error);
+      return 'Time unavailable';
     }
-    if (hours > 0) return `${hours}h ${minutes}m left`;
-    if (minutes > 0) return `${minutes}m left`;
-    return 'Ending soon';
   };
 
   return (
@@ -111,7 +118,7 @@ const HeroSection = () => {
                   whileHover={{ scale: 1.02 }}
                   className="transform transition-all"
                 >
-                  <Link to={`/poll/${poll.id}`}>
+                  <Link to={`/dashboard/poll/${poll.id}`}>
                     <Card className="bg-background/60 backdrop-blur-sm border-primary/10 hover:border-primary/20 transition-colors">
                       <CardContent className="p-4">
                         <h3 className="font-semibold mb-2">{poll.question}</h3>

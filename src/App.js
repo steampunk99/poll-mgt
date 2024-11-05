@@ -5,6 +5,8 @@ import { PollProvider } from "./context/PollContext";
 import { DarkModeContext } from "./context/DarkMode";
 import { AdminProvider } from "./context/AdminContext";
 import React,{useContext,useState,useEffect} from "react";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
@@ -19,6 +21,7 @@ function App() {
   }, [isDarkMode]);
 
   return (
+    <>
     <UserProvider>
     <PollProvider>
     <AdminProvider>
@@ -31,6 +34,19 @@ function App() {
     </AdminProvider>
     </PollProvider>
     </UserProvider>
+    <ToastContainer
+      position="top-right"
+      autoClose={3000}
+      hideProgressBar={false}
+      newestOnTop
+      closeOnClick
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      theme="colored"
+    />
+    </>
   );
 }
 

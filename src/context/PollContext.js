@@ -94,19 +94,33 @@ export const PollProvider = ({ children }) => {
 const updatePoll = async (pollId, updatedData) => {
   try {
     const pollDoc = doc(db, 'polls', pollId);
+    const pollSnap = await getDoc(pollDoc);
     
-    // Create a clean update object
-    const updateObject = {};
+    if (!pollSnap.exists()) {
+      throw new Error('Poll not found');
+    }
 
-    // Safely add choices if they exist and are valid
+    const currentPoll = pollSnap.data();
+    
+    // Check for duplicate votes if this is a vote update
+    if (updatedData.voters) {
+      const newVoter = updatedData.voters[updatedData.voters.length - 1];
+      const hasAlreadyVoted = currentPoll.voters?.some(voter => voter.userId === newVoter.userId);
+      
+      if (hasAlreadyVoted) {
+        throw new Error('User has already voted');
+      }
+    }
+
+    // Rest of the function remains the same...
+    const updateObject = {};
     if (Array.isArray(updatedData.choices)) {
       updateObject.choices = updatedData.choices;
     }
-
-    // Safely add voters if they exist and are valid
     if (Array.isArray(updatedData.voters)) {
       updateObject.voters = updatedData.voters;
     }
+    // ... rest of the function
 
     // Add timestamp
     updateObject.lastUpdated = serverTimestamp();

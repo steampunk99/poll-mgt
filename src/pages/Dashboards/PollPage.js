@@ -58,6 +58,12 @@ const handleVote = async (pollId, choiceIndex) => {
     const currentPoll = polls.find(p => p.id === pollId);
     if (!currentPoll) throw new Error('Poll not found');
 
+    // Check if user has already voted
+    const hasAlreadyVoted = currentPoll.voters?.some(voter => voter.userId === user.uid);
+    if (hasAlreadyVoted) {
+      throw new Error('You have already voted on this poll');
+    }
+
     // Create updated choices array with default values for votes
     const updatedChoices = currentPoll.choices.map((choice, index) => ({
       ...choice,
