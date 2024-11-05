@@ -127,7 +127,7 @@ export default function AdminDashboard() {
 
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
-    const date = timestamp.toDate();
+    const date = new Date(timestamp)
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
@@ -144,7 +144,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="w-full h-screen">
+    <div className="w-full h-screen mt-6">
     
       {/* <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1> */}
       
@@ -187,7 +187,7 @@ export default function AdminDashboard() {
       <TableCell>
         {poll.status === 'closed' ? (
           <span className="text-red-600">Closed</span>
-        ) : new Date(poll.deadline.toDate()) > new Date() ? (
+        ) : new Date(poll.deadline) > new Date() ? (
           <span className="text-green-600">Active</span>
         ) : (
           <span className="text-red-600">Expired</span>
