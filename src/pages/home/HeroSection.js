@@ -154,13 +154,15 @@ const HeroSection = () => {
     <section className="relative h-screen bg-background">
       {/* Background Pattern */}
       <div 
-        className="absolute inset-0 bg-[url('https://images.pexels.com/photos/28056127/pexels-photo-28056127/free-photo-of-a-book-and-an-orange-on-a-blanket-on-the-beach.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"
+        className="absolute inset-0 bg-[url('https://github.com/LexGodwin/PHOTO/blob/main/PSFU%20Hi-Res%20Logo%20(2).jpg?raw=true')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"
         style={{
-          backgroundSize: '730px 730px',
-          opacity: 0.6
+          backgroundSize: '1000px 1000px',
+          opacity: 0.7,
+          backgroundRepeat:'no-repeat',
+          backgroundPosition:'cover'
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-background to-background" />
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-blue-100 to-gray-200" />
       
       <div className="container mx-auto px-4 relative py-8">
         <div className="flex flex-col h-full gap-8">
