@@ -304,7 +304,7 @@ export default function ManagePollsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Manage Polls</h1>
         <div className="flex gap-2">
-          <Button onClick={handleExport} variant="outline">
+          <Button onClick={handleExport} variant="outline" className="bg-green-500 text-white">
             <Download className="mr-2 h-4 w-4" /> Export
           </Button>
           <Button onClick={() => navigate('/dashboard/createpolls')}>

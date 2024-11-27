@@ -23,7 +23,6 @@ import {
 import { Timestamp } from 'firebase/firestore';
 
 
-
 export default function PollsPage() {
   const { polls, fetchPolls, loading: contextLoading } = usePolls();
   const { user } = useUser();
@@ -152,23 +151,23 @@ export default function PollsPage() {
         exit={{ opacity: 0, y: -20 }}
         className="w-full"
       >
-        <Card className="group hover:shadow-lg transition-all duration-300 border-border/50 bg-gradient-to-b from-card/50 to-card">
+        <Card className="group hover:shadow-lg transition-all duration-300 border-primary/20 bg-gradient-to-b from-card/50 to-card">
           <CardHeader className="pb-4">
             <div className="flex justify-between items-start gap-4">
-              <div className="space-y-1 flex-1">
+              <div className="space-y-1.5 flex-1">
                 <Link to={`/dashboard/poll/${poll.id}`}>
-                  <CardTitle className="text-xl hover:text-primary transition-colors">
+                  <CardTitle className="text-xl group-hover:text-primary transition-colors">
                     {poll.question}
                   </CardTitle>
                 </Link>
                 <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1.5">
-                    <Clock className="h-4 w-4 text-primary" />
+                    <Clock className="h-4 w-4 text-primary animate-pulse" />
                     {formatDaysLeft(poll.deadline)}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <Users2 className="h-4 w-4 text-primary" />
-                    {totalVotes} votes
+                    {totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}
                   </span>
                   {hasVoted && (
                     <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
@@ -180,14 +179,20 @@ export default function PollsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {poll.choices.map((choice, index) => {
                 const votes = choice.votes || 0;
                 const percentage = totalVotes > 0 ? (votes / totalVotes) * 100 : 0;
                 const isUserVote = userVote?.choiceId === choice.id;
 
                 return (
-                  <div key={index} className="space-y-1.5">
+                  <motion.div 
+                    key={index} 
+                    className="space-y-1.5"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2 flex-1">
                         <span className="font-medium">{choice.text}</span>
@@ -197,17 +202,22 @@ export default function PollsPage() {
                           </Badge>
                         )}
                       </div>
-                      <span className="text-muted-foreground min-w-[4rem] text-right">
+                      <span className="text-muted-foreground min-w-[4rem] text-right font-medium">
                         {percentage.toFixed(1)}%
                       </span>
                     </div>
                     <div className="relative">
-                      <Progress 
-                        value={percentage} 
-                        className={`h-2 ${isUserVote ? 'bg-primary' : 'bg-muted'}`}
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                        className={`absolute h-2 rounded-full ${
+                          isUserVote ? 'bg-primary' : 'bg-primary/30'
+                        }`}
                       />
+                      <div className="h-2 w-full bg-muted rounded-full" />
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -217,7 +227,7 @@ export default function PollsPage() {
                 variant="outline" 
                 size="sm" 
                 asChild
-                className="hover:bg-primary/5 hover:text-primary"
+                className="hover:bg-primary/5 hover:text-primary border-primary/20"
               >
                 <Link to={`/dashboard/poll/${poll.id}`}>
                   View Details
@@ -232,19 +242,19 @@ export default function PollsPage() {
   };
 
   return (
-    <div className="container max-w-5xl mx-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Polls</h1>
+    <div className=" px-4 py-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div className="space-y-1.5">
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Polls</h1>
           <p className="text-muted-foreground">
-            View and participate in active polls
+            View and participate in community polls
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 w-full sm:w-auto">
           <Button 
             variant="outline" 
             onClick={() => fetchPolls()}
-            className="hover:bg-primary/5 hover:text-primary"
+            className="flex-1 sm:flex-initial hover:bg-primary/5 hover:text-primary border-primary/20"
           >
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
@@ -252,7 +262,7 @@ export default function PollsPage() {
           {isAdmin && (
             <Button 
               onClick={() => navigate('/dashboard/create-poll')}
-              className="bg-primary hover:bg-primary/90"
+              className="flex-1 sm:flex-initial bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
             >
               <PlusCircle className="mr-2 h-4 w-4" />
               Create Poll
@@ -261,19 +271,22 @@ export default function PollsPage() {
         </div>
       </div>
 
-      <Card className="mb-8 border-foreground/20">
+      <Card className="mb-8 border-primary/20 shadow-sm">
         <CardContent className="pt-6">
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
-              <Input
-                placeholder="Search polls..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full border-foreground/20 focus:ring-primary/20"
-              />
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search polls..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 border-primary/20 focus:ring-primary/20 focus:border-primary/30"
+                />
+              </div>
             </div>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[180px] border-foreground/20">
+              <SelectTrigger className="w-full sm:w-[180px] border-primary/20">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
@@ -286,10 +299,10 @@ export default function PollsPage() {
       </Card>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+        <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1">
           <TabsTrigger 
             value="active" 
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
           >
             Active Polls
             <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary">
@@ -298,7 +311,7 @@ export default function PollsPage() {
           </TabsTrigger>
           <TabsTrigger 
             value="closed"
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all"
           >
             Closed Polls
             <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary">
