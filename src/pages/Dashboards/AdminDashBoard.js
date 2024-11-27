@@ -127,8 +127,13 @@ export default function AdminDashboard() {
 
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
-    const date = new Date(timestamp)
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    // Handle both Firestore timestamp and regular date
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
   };
 
   const getTotalVotes = (choices) => {
@@ -209,5 +214,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
-
