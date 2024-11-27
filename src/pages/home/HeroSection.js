@@ -173,16 +173,7 @@ const HeroSection = () => {
                 transition={{ delay: 0.2 }}
                 className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-20 bg-primary/10 rounded-full blur-2xl"
               />
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-                Welcome to{" "}
-                <span className="text-primary relative inline-block">
-                  VoteSphere
-                  <div className="absolute bottom-1 left-0 w-full h-1 bg-primary/30 transform -skew-x-12" />
-                </span>
-              </h1>
-              <p className="text-muted-foreground text-lg mt-4 max-w-lg mx-auto">
-                Internal polling platform for efficient decision-making
-              </p>
+             
             </div>
           </div>
 
@@ -191,54 +182,7 @@ const HeroSection = () => {
             {/* Actions */}
             <div className="flex justify-center">
               <div className="bg-card/50 backdrop-blur max-w-md w-full">
-                <CardContent className="p-6 gap-4 flex justify-between items-center">
-                  {user?.role === 'admin' ? (
-                    <>
-                      <Button size="lg" className="w-full" asChild>
-                        <Link to="/dashboard/createpolls">
-                          <PlusCircle className="mr-2 h-5 w-5" />
-                          Create New Poll
-                        </Link>
-                      </Button>
-                      <Button size="lg" variant="outline" className="w-full" asChild>
-                        <Link to="/dashboard/admin">
-                          <LayoutDashboard className="mr-2 h-5 w-5" />
-                          View Dashboard
-                        </Link>
-                      </Button>
-                    </>
-                  ) : user ? (
-                    <>
-                      <Button size="lg" className="w-full" asChild>
-                        <Link to="/dashboard/polls">
-                          <Vote className="mr-2 h-5 w-5" />
-                          View Active Polls
-                        </Link>
-                      </Button>
-                      <Button size="lg" variant="outline" className="w-full" asChild>
-                        <Link to="/dashboard/voting-history">
-                          <History className="mr-2 h-5 w-5" />
-                          View Response History
-                        </Link>
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button size="lg" className="w-full" asChild>
-                        <Link to="/login">
-                          <LogIn className="mr-2 h-5 w-5" />
-                          Sign In
-                        </Link>
-                      </Button>
-                      <Button size="lg" variant="outline" className="w-full" asChild>
-                        <Link to="/register">
-                          <UserPlus className="mr-2 h-5 w-5" />
-                          Register
-                        </Link>
-                      </Button>
-                    </>
-                  )}
-                </CardContent>
+                
               </div>
             </div>
 
