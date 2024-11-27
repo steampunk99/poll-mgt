@@ -154,10 +154,10 @@ const HeroSection = () => {
     <section className="relative h-screen bg-background">
       {/* Background Pattern */}
       <div 
-        className="absolute inset-0 bg-[url('https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/www/public/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"
+        className="absolute inset-0 bg-[url('https://images.pexels.com/photos/28056127/pexels-photo-28056127/free-photo-of-a-book-and-an-orange-on-a-blanket-on-the-beach.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"
         style={{
-          backgroundSize: '30px 30px',
-          opacity: 0.2
+          backgroundSize: '730px 730px',
+          opacity: 0.6
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-background to-background" />
@@ -178,7 +178,7 @@ const HeroSection = () => {
           </div>
 
           {/* Main Content */}
-          <div className="space-y-8">
+          <div className="space-y-2">
             {/* Actions */}
             <div className="flex justify-center">
               <div className="bg-card/50 backdrop-blur max-w-md w-full">
