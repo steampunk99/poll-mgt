@@ -150,10 +150,10 @@ export default function AdminDashboard() {
       
       <PollStatsDashboard/>
 
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 mt-6">
         <h2 className="text-2xl font-semibold">Recent Polls</h2>
         <div className="space-x-4">
-          <Button asChild variant="outline" className="border-red-400">
+          <Button asChild variant="outline" className="text-white bg-[#3b82f6] ">
             <Link to="/dashboard/createpolls">
               <PlusCircle className="mr-2 h-4 w-4" /> Create Poll
             </Link>

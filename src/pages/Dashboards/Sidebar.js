@@ -107,7 +107,7 @@ const Sidebar = () => {
              <NavItem to="/dashboard/admin"  icon={Home}>Dashboard</NavItem>
               {/* <NavItem to="/dashboard/polls" icon={BarChart2}>Polls</NavItem> */}
               <NavItem to="/dashboard/managepolls" icon={Vote}>Manage Polls</NavItem>
-              {/* <NavItem to="/dashboard/reports" icon={FileText}>Results</NavItem> */}
+            
               <NavItem to="/dashboard/voting-history" icon={FileText}>Voting Results</NavItem>
               <NavItem to="/dashboard/manage-users" icon={User2Icon}>Manage Users</NavItem>
               

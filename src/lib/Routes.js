@@ -20,7 +20,7 @@ import DashboardLayout from "@/pages/Dashboards/DashBoardLayout";
 import VoterDashboard from "@/pages/Dashboards/VoterDashBoard";
 import RoleManagement from "@/pages/Dashboards/RoleManagement";
 import UserManagement from "@/pages/Dashboards/UserManagement";
-import Reports from "@/pages/Dashboards/Reports";
+
 import Settings from "@/pages/Settings";
 import AuditLogs from "@/pages/Dashboards/AuditLogs";
 import VotingHistory from "@/pages/Dashboards/VotingHistory";
@@ -100,7 +100,7 @@ const MainRoutes = () => {
         <Route path="poll/:pollId/edit" element={<PrivateRoute requiredRole="admin" ><EditPoll /></PrivateRoute>}/>
         <Route path="managepolls" element={<PrivateRoute requiredRole="admin"><ManagePollsPage /></PrivateRoute>} />
         <Route path="createpolls" element={<PrivateRoute requiredRole="admin"><CreatePollPage /></PrivateRoute>} />
-        <Route path="reports" element={<PrivateRoute requiredRole="admin"><Reports /></PrivateRoute>} />
+        
         <Route path="settings" element={<PrivateRoute requiredRole="admin"><Settings /></PrivateRoute>} />
         <Route path="logs" element={<PrivateRoute requiredRole="admin"><AuditLogs /></PrivateRoute>} />
       </Route>

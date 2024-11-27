@@ -2,7 +2,8 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '../lib/firebase'; // Import Firestore instance
 import { serverTimestamp, collection,arrayUnion,getDoc,where,query,orderBy,limit, getDocs, addDoc, deleteDoc, updateDoc, doc, Timestamp } from 'firebase/firestore';
 import { useUser } from './UserContext';
-
+import * as XLSX from 'xlsx';
+import { format } from 'date-fns';
 
 // Create PollContext
 const PollContext = createContext();
@@ -21,6 +22,22 @@ const logAudit = async (userId, action, details = {}) => {
   } catch (err) {
     console.error("Error logging audit action:", err);
   }
+};
+
+// helper function to format dates safely
+const formatDate = (timestamp) => {
+  if (!timestamp || !timestamp.seconds) return 'N/A';
+  try {
+    return format(new Date(timestamp.seconds * 1000), 'PPP');
+  } catch (err) {
+    console.error('Error formatting date:', err);
+    return 'Invalid Date';
+  }
+};
+
+// helper function to calculate total votes
+const calculateTotalVotes = (choices) => {
+  return choices.reduce((total, choice) => total + (choice.votes || 0), 0);
 };
 
 // Provider component
@@ -228,7 +245,6 @@ const updatePoll = async (pollId, updatedData) => {
     fetchPolls();
   }, []);
 
-
   const votePoll = async (pollId, choiceId, userId) => {
     try {
       // Get user document to check role
@@ -382,6 +398,81 @@ const updatePoll = async (pollId, updatedData) => {
     fetchPolls();
   }, []);
 
+  // Export polls data to Excel
+  const exportPollsData = async (pollsToExport) => {
+    try {
+      // Create worksheets for different aspects of the data
+      const pollSummaryData = pollsToExport.map(poll => ({
+        Question: poll.question,
+        'Created At': formatDate(poll.createdAt),
+        Status: new Date(poll.deadline?.seconds * 1000) > new Date() ? 'Active' : 'Closed',
+        'Total Votes': calculateTotalVotes(poll.choices),
+        Deadline: formatDate(poll.deadline),
+        Visibility: poll.visibility
+      }));
+
+      // Detailed votes worksheet data
+      const votesData = [];
+      pollsToExport.forEach(poll => {
+        poll.choices.forEach(choice => {
+          votesData.push({
+            Question: poll.question,
+            Choice: choice.text,
+            'Number of Votes': choice.votes || 0,
+            'Vote Percentage': `${((choice.votes || 0) / (calculateTotalVotes(poll.choices) || 1) * 100).toFixed(1)}%`,
+            Status: new Date(poll.deadline?.seconds * 1000) > new Date() ? 'Active' : 'Closed',
+            'Poll Created': formatDate(poll.createdAt),
+            'Poll Deadline': formatDate(poll.deadline)
+          });
+        });
+      });
+
+      // Create a workbook with multiple sheets
+      const workbook = XLSX.utils.book_new();
+      
+      // Add Poll Summary sheet
+      const summaryWorksheet = XLSX.utils.json_to_sheet(pollSummaryData);
+      XLSX.utils.book_append_sheet(workbook, summaryWorksheet, "Poll Summary");
+      
+      // Add Detailed Votes sheet
+      const votesWorksheet = XLSX.utils.json_to_sheet(votesData);
+      XLSX.utils.book_append_sheet(workbook, votesWorksheet, "Vote Details");
+
+      // Auto-size columns for both sheets
+      const summaryRange = XLSX.utils.decode_range(summaryWorksheet['!ref']);
+      const votesRange = XLSX.utils.decode_range(votesWorksheet['!ref']);
+      
+      [
+        { sheet: summaryWorksheet, range: summaryRange },
+        { sheet: votesWorksheet, range: votesRange }
+      ].forEach(({ sheet, range }) => {
+        const cols = [];
+        for(let C = range.s.c; C <= range.e.c; ++C) {
+          let max = 0;
+          for(let R = range.s.r; R <= range.e.r; ++R) {
+            const cell = sheet[XLSX.utils.encode_cell({r: R, c: C})];
+            if(cell && cell.v) max = Math.max(max, String(cell.v).length);
+          }
+          cols[C] = { wch: max + 2 };
+        }
+        sheet['!cols'] = cols;
+      });
+
+      // Write the workbook to a file
+      XLSX.writeFile(workbook, "poll_results.xlsx");
+
+      // Log the export action
+      await logAudit(user?.uid, 'export_polls', { 
+        count: pollsToExport.length,
+        exportType: 'excel'
+      });
+
+    } catch (err) {
+      console.error("Error exporting polls:", err);
+      throw new Error('Failed to export polls data');
+    }
+  };
+
   return (
     <PollContext.Provider
       value={{
@@ -390,6 +481,7 @@ const updatePoll = async (pollId, updatedData) => {
         loading,
         error,
         fetchPolls,
+        fetchActivePolls,
         createPoll,
         updatePoll,
         deletePoll,
@@ -400,8 +492,7 @@ const updatePoll = async (pollId, updatedData) => {
         getUserPolls,
         getPollResults,
         searchPolls,
-        fetchActivePolls,
-        
+        exportPollsData
       }}
     >
       {children}
@@ -410,5 +501,3 @@ const updatePoll = async (pollId, updatedData) => {
 };
 
 export const usePolls = () => useContext(PollContext);
-
-  

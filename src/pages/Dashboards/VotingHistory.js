@@ -4,7 +4,7 @@ import { useUser } from '@/context/UserContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar, Users, CheckCircle2, Trash2, Edit, Lock, AlertTriangle, BarChart2 } from "lucide-react";
+import { Loader2, Calendar, Users, CheckCircle2, Trash2, Edit, Lock, AlertTriangle, BarChart2, ChevronRight, Clock } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -16,6 +16,7 @@ import {
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { motion } from 'framer-motion';
 
 export default function VotingHistory() {
@@ -136,7 +137,8 @@ export default function VotingHistory() {
               {poll.choices.map((choice, index) => {
                 const votes = choice.votes || 0;
                 const percentage = totalVotes > 0 ? (votes / totalVotes) * 100 : 0;
-                const isUserVote = userVote?.choiceId === choice.id; // Updated check for user's vote
+                const isUserVote = userVote?.choiceId === choice.id;
+                const choiceVoters = poll.voters?.filter(voter => voter.choiceId === choice.id) || [];
 
                 return (
                   <div key={index} className="space-y-1">
@@ -150,15 +152,40 @@ export default function VotingHistory() {
                           </Badge>
                         )}
                       </div>
-                      <span className="text-muted-foreground">{votes} votes</span>
+                      <span className="text-muted-foreground">
+                        {votes} votes ({percentage.toFixed(1)}%)
+                      </span>
                     </div>
-                    <div className="relative">
-                      <Progress 
-                        value={percentage} 
-                        className={`h-2 ${isUserVote ? 'bg-primary/15' : ''}`}
-                      />
-                     
-                    </div>
+                    <Progress value={percentage} className="h-2" />
+                    
+                    {/* Voter Comments Section */}
+                    {choiceVoters.length > 0 && (
+                      <div className="mt-2 pl-4 border-l-2 border-muted">
+                        <Collapsible>
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="sm" className="p-0 h-auto font-normal">
+                              <ChevronRight className="h-4 w-4 mr-1" />
+                              Show {choiceVoters.length} comments
+                            </Button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <div className="space-y-2 mt-2">
+                              {choiceVoters.map((voter, vIndex) => (
+                                <div key={vIndex} className="bg-muted/50 rounded-md p-2 text-sm">
+                                  <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Clock className="h-3 w-3" />
+                                    <span>{formatDate(voter.votedAt)}</span>
+                                  </div>
+                                  {voter.reason && (
+                                    <p className="mt-1 text-foreground">{voter.reason}</p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      </div>
+                    )}
                   </div>
                 );
               })}
