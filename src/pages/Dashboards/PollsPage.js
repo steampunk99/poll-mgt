@@ -160,6 +160,19 @@ export default function PollsPage() {
                     {poll.question}
                   </CardTitle>
                 </Link>
+                <div className="mt-6 flex justify-end">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                asChild
+                className="hover:bg-primary/5 text-white bg-primary border-primary/20"
+              >
+                <Link to={`/dashboard/poll/${poll.id}`}>
+                  View Details
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
                 <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1.5">
                     <Clock className="h-4 w-4 text-primary animate-pulse" />
