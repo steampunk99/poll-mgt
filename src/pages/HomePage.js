@@ -1,24 +1,30 @@
 import React from 'react';
+import { useUser } from '@/context/UserContext';
+import { useAdmin } from '@/context/AdminContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import HeroSection from '../pages/home/HeroSection';
-import ActivePollsSection from '../pages/home/ActivePollsSection';
-import FeaturesSection from '../pages/home/FeatureSection';
-import TestimonialsSection from '../pages/home/TestimonialSection';
-import CallToActionSection from '../pages/home/CallToActionSection';
-import ContactPage from './ContactUsPage';
+import HeroSection from './home/HeroSection';
+import ActivePollsSection from './home/ActivePollsSection';
+import FeaturesSection from './home/FeatureSection';
+import StatisticsSection from './home/StatisticsSection';
+import CallToActionSection from './home/CallToActionSection';
+import { Separator } from '@/components/ui/separator';
 
 export default function HomePage() {
+  const { user } = useUser();
+  const { pollStats, userStats, loading: adminLoading } = useAdmin();
+
   return (
-    <div className="min-h-screen flex flex-col  text-foreground">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Header />
       <main className="flex-grow">
         <HeroSection />
-        {/* <ActivePollsSection /> */}
+        <Separator className="my-2" />
+        <StatisticsSection pollStats={pollStats} userStats={userStats} loading={adminLoading} />
+        <Separator className="my-2" />
+        <ActivePollsSection />
         <FeaturesSection />
-        {/* <TestimonialsSection /> */}
-        <CallToActionSection />
-        <ContactPage/>
+        {!user && <CallToActionSection />}
       </main>
       <Footer />
     </div>
