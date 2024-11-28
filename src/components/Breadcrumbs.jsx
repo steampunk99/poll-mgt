@@ -44,9 +44,11 @@ export default function Breadcrumbs() {
           try {
             const pollDoc = await getDoc(doc(db, 'polls', segment));
             if (pollDoc.exists()) {
+              // Use the poll's question as the display name
+              const pollData = pollDoc.data();
               setPollNames(prev => ({
                 ...prev,
-                [segment]: pollDoc.data().title
+                [segment]: pollData.question || 'Untitled Poll'
               }));
             }
           } catch (error) {
@@ -70,6 +72,11 @@ export default function Breadcrumbs() {
       let displayName = isDynamicSegment 
         ? (pollNames[segment] || 'Loading...') 
         : (routeNameMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1));
+
+      // Truncate long poll names in breadcrumb
+      if (isDynamicSegment && displayName.length > 30) {
+        displayName = displayName.substring(0, 30) + '...';
+      }
 
       if (index === pathSegments.length - 1) {
         return (

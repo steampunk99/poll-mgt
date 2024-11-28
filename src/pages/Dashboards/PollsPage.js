@@ -215,7 +215,8 @@ export default function PollsPage() {
                           </Badge>
                         )}
                       </div>
-                      <span className="text-muted-foreground min-w-[4rem] text-right font-medium">
+                      <span className="text-sm font-medium">{votes} {votes === 1 ? 'vote' : 'votes'}</span>
+                      <span className="text-background min-w-[4rem] text-right font-medium">
                         {percentage.toFixed(1)}%
                       </span>
                     </div>

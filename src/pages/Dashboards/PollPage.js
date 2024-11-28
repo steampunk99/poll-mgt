@@ -227,7 +227,7 @@ export default function PollPage() {
                         </div>
                         <div className="text-right">
                           <span className="text-sm font-medium">{votes} {votes === 1 ? 'vote' : 'votes'}</span>
-                          <p className="text-xs text-muted-foreground">{percentage.toFixed(1)}%</p>
+                          <p className="text-xs text-background">{percentage.toFixed(1)}%</p>
                         </div>
                       </div>
 
