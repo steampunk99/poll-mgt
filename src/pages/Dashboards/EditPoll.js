@@ -66,7 +66,7 @@ const EditPoll = () => {
             description: "The requested poll could not be found.",
             variant: "destructive",
           });
-          navigate('/managepolls');
+          navigate('dashboard/managepolls');
         }
       } catch (err) {
         toast({
@@ -85,24 +85,83 @@ const EditPoll = () => {
   const onSubmit = async (data) => {
     setSaving(true);
     try {
+      const pollDoc = doc(db, 'polls', pollId);
+      const pollSnapshot = await getDoc(pollDoc);
+      const currentPoll = pollSnapshot.data();
+      
+      console.log('Current poll data:', currentPoll);
+      console.log('Form data:', data);
+
+      // Map new choices while preserving existing data
+      const updatedChoices = data.choices.map((text, index) => {
+        // First try to find an existing choice with the same index
+        const existingChoice = currentPoll.choices[index];
+        
+        if (existingChoice && existingChoice.text === text) {
+          // If text matches at same index, preserve everything
+          return existingChoice;
+        }
+        
+        // If text changed at this index, look for the text elsewhere
+        const matchingChoice = currentPoll.choices.find(c => c.text === text);
+        if (matchingChoice) {
+          // If we found the text elsewhere, preserve its data
+          return matchingChoice;
+        }
+        
+        // If this is a new choice, create new entry
+        return {
+          id: `choice-${index}`,
+          text: text,
+          votes: 0
+        };
+      });
+
+      // Update voter references if needed
+      const updatedVoters = (currentPoll.voters || []).map(voter => {
+        // Find the original choice this voter voted for
+        const originalChoice = currentPoll.choices.find(c => c.id === voter.choiceId);
+        if (!originalChoice) return voter;
+
+        // Find where this choice text exists in the updated choices
+        const newChoice = updatedChoices.find(c => c.text === originalChoice.text);
+        if (!newChoice) return voter;
+
+        // Update the voter's choiceId if it changed
+        return {
+          ...voter,
+          choiceId: newChoice.id
+        };
+      });
+
       const updatedPoll = {
         question: data.question,
-        choices: data.choices.map(text => ({ text, votes: 0 })),
+        choices: updatedChoices,
+        voters: updatedVoters,
         deadline: new Date(data.deadline),
+        description: currentPoll.description || '',
         lastUpdated: new Date(),
+        createdBy: currentPoll.createdBy,
+        createdAt: currentPoll.createdAt,
+        status: currentPoll.status || 'active',
+        visibility: currentPoll.visibility || 'public'
       };
 
-      await updatePoll(pollId, updatedPoll);
+      console.log('Updating poll with:', updatedPoll);
+
+      const result = await updatePoll(pollId, updatedPoll);
+      console.log('Update result:', result);
       
       toast({
         title: "Success",
         description: "Poll updated successfully.",
       });
-      navigate('/managepolls');
+      navigate('/dashboard/managepolls');
     } catch (err) {
+      console.error("Error updating poll:", err);
       toast({
         title: "Error",
-        description: "Failed to update poll.",
+        description: "Failed to update poll: " + (err.message || "Unknown error"),
         variant: "destructive",
       });
     } finally {
@@ -239,7 +298,7 @@ const EditPoll = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate('/managepolls')}
+                onClick={() => navigate('dashboard/managepolls')}
               >
                 Cancel
               </Button>

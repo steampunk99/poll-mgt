@@ -129,6 +129,7 @@ export const PollProvider = ({ children }) => {
 // update a poll
 const updatePoll = async (pollId, updatedData) => {
   try {
+    console.log('Starting poll update for:', pollId);
     const pollDoc = doc(db, 'polls', pollId);
     const pollSnap = await getDoc(pollDoc);
     
@@ -137,9 +138,10 @@ const updatePoll = async (pollId, updatedData) => {
     }
 
     const currentPoll = pollSnap.data();
+    console.log('Current poll data:', currentPoll);
     
     // Check for duplicate votes if this is a vote update
-    if (updatedData.voters) {
+    if (updatedData.voters && updatedData.voters.length > currentPoll.voters?.length) {
       const newVoter = updatedData.voters[updatedData.voters.length - 1];
       const hasAlreadyVoted = currentPoll.voters?.some(voter => voter.userId === newVoter.userId);
       
@@ -148,30 +150,42 @@ const updatePoll = async (pollId, updatedData) => {
       }
     }
 
-    // Rest of the function remains the same...
-    const updateObject = {};
-    if (Array.isArray(updatedData.choices)) {
-      updateObject.choices = updatedData.choices;
-    }
-    if (Array.isArray(updatedData.voters)) {
-      updateObject.voters = updatedData.voters;
-    }
-    // ... rest of the function
+    // Create update object with all valid fields
+    const updateObject = {
+      ...updatedData
+    };
 
-    // Add timestamp
-    updateObject.lastUpdated = serverTimestamp();
+    // Convert dates to Timestamps
+    if (updateObject.deadline instanceof Date) {
+      updateObject.deadline = Timestamp.fromDate(updateObject.deadline);
+    }
+    if (updateObject.lastUpdated instanceof Date) {
+      updateObject.lastUpdated = serverTimestamp();
+    }
 
-    // Remove any undefined values
-    Object.keys(updateObject).forEach(key => {
-      if (updateObject[key] === undefined) {
-        delete updateObject[key];
+    // Ensure choices maintain their structure and votes
+    if (Array.isArray(updateObject.choices)) {
+      updateObject.choices = updateObject.choices.map(choice => ({
+        id: choice.id,
+        text: choice.text,
+        votes: typeof choice.votes === 'number' ? choice.votes : 0
+      }));
+
+      // Validate that all choices have proper structure
+      const invalidChoice = updateObject.choices.find(
+        choice => !choice.id || typeof choice.text !== 'string'
+      );
+      if (invalidChoice) {
+        throw new Error('Invalid choice structure detected');
       }
-    });
+    }
+
+    console.log('Final update object:', updateObject);
 
     // Only proceed if we have valid data to update
     if (Object.keys(updateObject).length > 0) {
       await updateDoc(pollDoc, updateObject);
-      await logAudit(user?.uid, 'update_poll', { pollId });
+      await logAudit(user?.uid, 'update_poll', { pollId, changes: updateObject });
       await fetchPolls();
       return { success: true };
     }
@@ -179,7 +193,7 @@ const updatePoll = async (pollId, updatedData) => {
     return { success: false, error: 'No valid data to update' };
   } catch (err) {
     console.error("Error updating poll:", err);
-    setError('Failed to update poll.');
+    setError('Failed to update poll: ' + err.message);
     throw err;
   }
 };
